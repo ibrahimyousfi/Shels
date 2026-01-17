@@ -8,9 +8,10 @@ interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   onLoadSession?: (session: Session) => void;
+  isMobile?: boolean;
 }
 
-export default function Sidebar({ isOpen, onToggle, onLoadSession }: SidebarProps) {
+export default function Sidebar({ isOpen, onToggle, onLoadSession, isMobile = false }: SidebarProps) {
   const [isSessionsOpen, setIsSessionsOpen] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -69,10 +70,12 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession }: SidebarProp
   return (
     <div 
       className={`bg-[#0f0f0f] text-white h-screen flex flex-col fixed left-0 top-0 z-20 border-r border-[#2f0012] transition-all duration-300 ${
-        isOpen ? 'w-64' : 'w-16'
+        isMobile 
+          ? (isOpen ? 'w-64' : '-translate-x-full w-64')
+          : (isOpen ? 'w-64' : 'w-16')
       }`}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={() => !isMobile && setIsHovering(true)}
+      onMouseLeave={() => !isMobile && setIsHovering(false)}
     >
       {/* Logo & Toggle */}
       <div className="p-4 flex items-center justify-start">
