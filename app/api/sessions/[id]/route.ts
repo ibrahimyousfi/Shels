@@ -8,10 +8,10 @@ const SESSIONS_DIR = path.join(process.cwd(), 'data', 'sessions');
 // GET: Get a specific session by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionId = params.id;
+    const { id: sessionId } = await params;
     const fileName = `${sessionId}.json`;
     const filePath = path.join(SESSIONS_DIR, fileName);
     
@@ -34,10 +34,10 @@ export async function GET(
 // DELETE: Delete a session by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionId = params.id;
+    const { id: sessionId } = await params;
     const fileName = `${sessionId}.json`;
     const filePath = path.join(SESSIONS_DIR, fileName);
     

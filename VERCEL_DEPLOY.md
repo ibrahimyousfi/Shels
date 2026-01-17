@@ -12,10 +12,10 @@ cd react.wieps
 git add .
 
 # Commit
-git commit -m "Initial Next.js medical app setup"
+git commit -m "Initial Next.js app setup"
 
 # Connect to GitHub (if not connected)
-git remote add origin https://github.com/ibrahimyousfi/loruim.wieps.git
+    git remote add origin https://github.com/ibrahimyousfi/Shels.git
 
 # Push files
 git push -u origin main
@@ -31,7 +31,7 @@ git push -u origin main
 ### 3. Connect Project
 
 1. In Vercel Dashboard, click **"Add New Project"**
-2. Select GitHub repository: `loruim.wieps`
+    2. Select GitHub repository: `Shels`
 3. Vercel will auto-detect Next.js ✅
 
 ### 4. Setup Environment Variables
@@ -53,8 +53,8 @@ GEMINI_API_KEY = your_gemini_api_key_here
 ### 6. Get URL
 
 After deployment, you'll get:
-- **Production URL**: `https://loruim-wieps.vercel.app`
-- **Deployment URL**: `https://loruim-wieps-git-main.vercel.app`
+    - **Production URL**: `https://shels.vercel.app`
+    - **Deployment URL**: `https://shels-git-main.vercel.app`
 
 ---
 

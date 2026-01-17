@@ -1,7 +1,9 @@
 {
-  "name": "code-testing-agent",
+  "name": "shels",
   "version": "0.1.0",
+  "description": "Autonomous code testing and analysis agent powered by Google Gemini 3 AI",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +12,6 @@
   },
   "dependencies": {
     "@google/genai": "^1.37.0",
-    "@google/generative-ai": "^0.24.1",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3"
