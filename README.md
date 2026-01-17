@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Code Testing Agent - Gemini 3 Hackathon
 
-## Getting Started
+Autonomous code testing and improvement system using Google Gemini 3 API with Marathon Agent capabilities.
 
-First, run the development server:
+## Technologies Used
+
+- **Next.js 16** - Full-stack framework
+- **React 19** - Frontend library
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Gemini 3 API** - AI integration (Extended Context, Advanced Reasoning, Marathon Agent)
+
+## Features
+
+- ✅ **Code Analysis** - Comprehensive codebase analysis using Extended Context (1M tokens)
+- ✅ **Test Generation** - Automatic generation of unit, integration, security, and performance tests
+- ✅ **Issue Detection** - Find bugs, security vulnerabilities, performance issues, and code quality problems
+- ✅ **Auto-Fix** - Automatic code fixes with AI-powered suggestions
+- ✅ **Marathon Agent** - Long-running tasks with continuous monitoring (24/7)
+- ✅ **GitHub Integration** - Connect directly to GitHub repositories
+
+## Local Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Run in development mode
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Run production
+npm start
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Steps:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Create Vercel Account** (free)
+   - Go to [vercel.com](https://vercel.com)
+   - Sign up with GitHub
+
+2. **Connect Project**
+   - Click "New Project"
+   - Select GitHub repository
+   - Vercel will auto-detect Next.js
+
+3. **Add Environment Variables**
+   - `GEMINI_API_KEY` - Gemini API key
+   - `DATABASE_URL` - Database URL (if needed)
+
+4. **Deploy**
+   - Click "Deploy"
+   - Vercel will deploy automatically
+
+### Deployment URL:
+After deployment, you'll get a URL like:
+`https://p.vercel.app`
+
+## Project Structure
+
+```
+code-testing-agent/
+├── app/
+│   ├── api/              # API Routes (Backend)
+│   │   ├── analyze/      # Code analysis endpoint
+│   │   ├── generate-tests/ # Test generation endpoint
+│   │   └── fix/          # Auto-fix endpoint
+│   ├── page.tsx          # Home page (UI)
+│   └── layout.tsx        # Root layout
+├── lib/
+│   ├── services/         # Core services
+│   │   ├── codeAnalyzer.ts    # Code analysis service
+│   │   ├── testGenerator.ts   # Test generation service
+│   │   ├── autoFix.ts         # Auto-fix service
+│   │   └── repoReader.ts      # Repository reader service
+│   └── gemini.ts         # Gemini API Service
+└── package.json
+```
+
+## Gemini 3 Features Used
+
+- **Extended Context (1M tokens)** - Read entire codebases at once for comprehensive analysis
+- **Advanced Reasoning** - Complex code analysis, problem detection, and intelligent test generation
+- **Marathon Agent** - Long-running autonomous testing tasks with Thought Signatures for continuity
+- **Self-Correction** - Autonomous system that learns and improves from previous test cycles
+- **Real-time API Integration** - Efficient streaming and response handling
+
+## Strategic Track: Marathon Agent
+
+This project implements the **Marathon Agent** strategic track, featuring:
+- **Long-running tasks** - Continuous monitoring spanning hours or days
+- **Thought Signatures** - Maintains continuity across multi-step tool calls
+- **Self-correction** - Automatically improves testing strategy based on results
+- **Autonomous operation** - Runs without human supervision
+
+## Environment Variables
+
+Create `.env.local` file:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+DATABASE_URL=your_database_url_here
+```
+
+## Contributing
+
+This project is for Gemini 3 Hackathon participation.
+
+## License
+
+ISC
