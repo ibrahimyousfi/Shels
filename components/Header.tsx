@@ -33,11 +33,18 @@ export default function Header({ sidebarOpen = true, isMobile = false, onToggleS
 
       <div className="flex items-center gap-2 md:gap-3">
         {!isMobile && (
-          <button className="text-gray-500 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          <a 
+            href="https://github.com/ibrahimyousfi/Shels" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src="https://img.shields.io/badge/GitHub-Shels-181717?style=flat&logo=github&logoColor=white" 
+              alt="GitHub Repository" 
+              className="h-6"
+            />
+          </a>
         )}
         
         <button className={`text-gray-500 hover:text-white transition-colors flex items-center gap-2 ${isMobile ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg hover:bg-[#1f1f1f]`}>
