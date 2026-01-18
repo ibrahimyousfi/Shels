@@ -15,6 +15,16 @@ Built for the **Gemini 3 Hackathon** with a focus on the **Marathon Agent** stra
 
 ---
 
+## 📚 Documentation
+
+- **[📖 Wiki](https://github.com/ibrahimyousfi/Shels/wiki)** - Complete documentation with tabs
+- **[🏗️ Architecture](ARCHITECTURE.md)** - Technical architecture and deep dive
+- **[🔬 Comparison](COMPARISON.md)** - How Shels compares to other tools
+- **[🏆 Hackathon](HACKATHON.md)** - Hackathon submission details and highlights
+- **[💼 Use Cases](USE_CASES.md)** - Use cases for different teams
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
@@ -250,16 +260,6 @@ shels/
 
 ---
 
-## 📚 Documentation
-
-- **[📖 Wiki](https://github.com/ibrahimyousfi/Shels/wiki)** - Complete documentation with tabs
-- **[🏗️ Architecture](ARCHITECTURE.md)** - Technical architecture and deep dive
-- **[🔬 Comparison](COMPARISON.md)** - How Shels compares to other tools
-- **[🏆 Hackathon](HACKATHON.md)** - Hackathon submission details and highlights
-- **[💼 Use Cases](USE_CASES.md)** - Use cases for different teams
-
----
-
 ## 🎬 How It Works
 
 1. **Input**: Provide a GitHub repository URL or upload files
@@ -317,7 +317,7 @@ shels/
 - **Business Impact**: Unique feature connecting code to business metrics - **Innovation**
 - **Advanced Reasoning**: Multi-step reasoning chains for transparency - **Technical Excellence**
 
-📖 **For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
+📖 **For detailed architecture documentation, see [Architecture on Wiki](https://github.com/ibrahimyousfi/Shels/wiki/Architecture) or [ARCHITECTURE.md](./ARCHITECTURE.md)**
 
 ---
 
