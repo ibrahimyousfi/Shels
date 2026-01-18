@@ -24,24 +24,22 @@ export default function CodeMetricsView({ results, onRegenerate }: CodeMetricsVi
     return (
       <div className="mt-4">
         <h3 className="text-xl font-semibold mb-4 text-white">Code Metrics</h3>
-        <div className="bg-yellow-900/20 border border-[#2f0012] rounded-lg p-4">
-          <p className="text-yellow-200 mb-2">⚠️ No metrics data available.</p>
-          <p className="text-sm text-gray-400 mb-4">
-            {hasFiles ? (
-              <>
-                Files were analyzed but metrics calculation failed. This may happen if:
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>API quota was exceeded (check console for details)</li>
-                  <li>An error occurred during calculation</li>
-                </ul>
-              </>
-            ) : (
-              <>
-                No files were analyzed, so no metrics can be calculated.
-              </>
-            )}
-            <p className="mt-2">Please check the browser console for details.</p>
-          </p>
+      <div className="bg-yellow-900/20 border border-[#2f0012] rounded-lg p-4">
+        <p className="text-yellow-200 mb-2">⚠️ No metrics data available.</p>
+        <div className="text-sm text-gray-400 mb-4">
+          {hasFiles ? (
+            <>
+              <p className="mb-2">Files were analyzed but metrics calculation failed. This may happen if:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>API quota was exceeded (check console for details)</li>
+                <li>An error occurred during calculation</li>
+              </ul>
+            </>
+          ) : (
+            <p>No files were analyzed, so no metrics can be calculated.</p>
+          )}
+          <p className="mt-2">Please check the browser console for details.</p>
+        </div>
           {hasFiles && onRegenerate && (
             <button
               onClick={handleRegenerate}
@@ -61,6 +59,34 @@ export default function CodeMetricsView({ results, onRegenerate }: CodeMetricsVi
       <h3 className="text-xl font-semibold mb-4 text-white">Code Metrics</h3>
       
       <IndividualMetrics metrics={metrics} />
+      
+      {/* Show recommendations if available */}
+      {(metrics.testability?.recommendations && metrics.testability.recommendations.length > 0) && (
+        <RecommendationsSection recommendations={metrics.testability.recommendations} />
+      )}
+      
+      {/* Show maintainability factors if available */}
+      {(metrics.maintainability?.factors && metrics.maintainability.factors.length > 0) && (
+        <MaintainabilityFactors factors={metrics.maintainability.factors} />
+      )}
+      
+      {/* Show technical debt if available */}
+      {metrics.technicalDebt && (
+        <TechnicalDebtSection technicalDebt={metrics.technicalDebt} />
+      )}
+      
+      {/* Show overall score and recommendations if available (old format) */}
+      {(metrics as any).overall !== undefined && (
+        <OverallScore score={(metrics as any).overall} />
+      )}
+      
+      {(metrics as any).recommendations && Array.isArray((metrics as any).recommendations) && (metrics as any).recommendations.length > 0 && (
+        <RecommendationsSection recommendations={(metrics as any).recommendations} />
+      )}
+      
+      {(metrics as any).trends && (
+        <TrendsSection trends={(metrics as any).trends} />
+      )}
     </div>
   );
 }
@@ -86,10 +112,40 @@ function OverallScore({ score }: { score: number }) {
 }
 
 function IndividualMetrics({ metrics }: { metrics: CodeMetrics }) {
+  // Handle both old format (simple numbers) and new format (objects)
+  const maintainabilityScore = typeof metrics.maintainability === 'number' 
+    ? metrics.maintainability 
+    : metrics.maintainability?.score || 0;
+  const testabilityScore = typeof metrics.testability === 'number'
+    ? metrics.testability
+    : metrics.testability?.score || 0;
+  const complexityValue = typeof metrics.complexity === 'number'
+    ? metrics.complexity
+    : metrics.complexity?.average || 0;
+  const complexityMax = typeof metrics.complexity === 'object' ? metrics.complexity?.max : undefined;
+  const complexityDist = typeof metrics.complexity === 'object' ? metrics.complexity?.distribution : undefined;
+
   const metricItems = [
-    { label: 'Maintainability', value: metrics.maintainability.score, color: 'blue' },
-    { label: 'Testability', value: metrics.testability.score, color: 'green' },
-    { label: 'Complexity (Avg)', value: metrics.complexity.average, color: 'orange' }
+    { 
+      label: 'Maintainability', 
+      value: maintainabilityScore, 
+      color: maintainabilityScore >= 70 ? 'green' : maintainabilityScore >= 50 ? 'yellow' : 'red',
+      description: 'How easy is it to maintain and modify the code?'
+    },
+    { 
+      label: 'Testability', 
+      value: testabilityScore, 
+      color: testabilityScore >= 70 ? 'green' : testabilityScore >= 50 ? 'yellow' : 'red',
+      description: 'How easy is it to test the code?'
+    },
+    { 
+      label: 'Complexity (Avg)', 
+      value: complexityValue, 
+      color: complexityValue <= 30 ? 'green' : complexityValue <= 60 ? 'yellow' : 'red',
+      description: 'Average cyclomatic complexity (lower is better)',
+      isInverted: true,
+      showExtra: complexityMax !== undefined
+    }
   ].filter(item => item.value !== undefined);
 
   if (metricItems.length === 0) return null;
@@ -98,24 +154,45 @@ function IndividualMetrics({ metrics }: { metrics: CodeMetrics }) {
     blue: 'bg-blue-600',
     red: 'bg-red-600',
     green: 'bg-green-600',
+    yellow: 'bg-yellow-600',
     purple: 'bg-purple-600',
     orange: 'bg-orange-600'
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
-      {metricItems.map(item => (
-        <div key={item.label}>
-          <p className="text-sm text-gray-300 mb-1">{item.label}</p>
-          <div className="w-full bg-gray-800 rounded-full h-2">
-            <div 
-              className={`${colorMap[item.color] || 'bg-gray-600'} h-2 rounded-full`}
-              style={{ width: `${Math.min(100, Math.max(0, item.value))}%` }}
-            ></div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {metricItems.map(item => {
+        const displayValue = item.isInverted ? 100 - item.value : item.value;
+        const percentage = Math.min(100, Math.max(0, displayValue));
+        
+        return (
+          <div key={item.label} className="bg-[#1f1f1f] border border-[#2f0012] rounded-lg p-4">
+            <p className="text-sm text-gray-300 mb-1 font-semibold">{item.label}</p>
+            <p className="text-xs text-gray-500 mb-3">{item.description}</p>
+            <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
+              <div 
+                className={`${colorMap[item.color] || 'bg-gray-600'} h-3 rounded-full transition-all`}
+                style={{ width: `${percentage}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-gray-400">Score</p>
+              <p className={`text-sm font-bold ${
+                item.color === 'green' ? 'text-green-400' :
+                item.color === 'yellow' ? 'text-yellow-400' :
+                'text-red-400'
+              }`}>
+                {item.value.toFixed(1)}{item.isInverted ? '' : '%'}
+              </p>
+            </div>
+            {item.isInverted && item.showExtra && complexityMax !== undefined && complexityDist && (
+              <p className="text-xs text-gray-500 mt-1">
+                Max: {complexityMax} | Distribution: {Object.keys(complexityDist).length} levels
+              </p>
+            )}
           </div>
-          <p className="text-xs text-gray-400 mt-1">{item.value}%</p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -123,12 +200,55 @@ function IndividualMetrics({ metrics }: { metrics: CodeMetrics }) {
 function RecommendationsSection({ recommendations }: { recommendations: string[] }) {
   return (
     <div className="mb-4 bg-blue-900/20 p-4 rounded-lg border border-[#2f0012]">
-      <h4 className="font-semibold text-blue-300 mb-2">💡 Recommendations</h4>
-      <ul className="list-disc list-inside space-y-1">
+      <h4 className="font-semibold text-blue-300 mb-3">💡 Testability Recommendations</h4>
+      <ul className="list-disc list-inside space-y-2">
         {recommendations.map((rec: string, index: number) => (
           <li key={index} className="text-sm text-gray-300">{rec}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function MaintainabilityFactors({ factors }: { factors: string[] }) {
+  return (
+    <div className="mb-4 bg-green-900/20 p-4 rounded-lg border border-[#2f0012]">
+      <h4 className="font-semibold text-green-300 mb-3">📊 Maintainability Factors</h4>
+      <ul className="list-disc list-inside space-y-2">
+        {factors.map((factor: string, index: number) => (
+          <li key={index} className="text-sm text-gray-300">{factor}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TechnicalDebtSection({ technicalDebt }: { technicalDebt: { hours: number; cost: number; breakdown: Array<{ type: string; hours: number }> } }) {
+  return (
+    <div className="mb-4 bg-red-900/20 p-4 rounded-lg border border-[#2f0012]">
+      <h4 className="font-semibold text-red-300 mb-3">⚠️ Technical Debt</h4>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <p className="text-xs text-gray-400 mb-1">Estimated Hours</p>
+          <p className="text-xl font-bold text-red-400">{technicalDebt.hours.toFixed(1)}h</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400 mb-1">Estimated Cost</p>
+          <p className="text-xl font-bold text-red-400">${technicalDebt.cost.toLocaleString()}</p>
+        </div>
+      </div>
+      {technicalDebt.breakdown && technicalDebt.breakdown.length > 0 && (
+        <div>
+          <p className="text-sm text-gray-400 mb-2">Breakdown by Type:</p>
+          <ul className="list-disc list-inside space-y-1">
+            {technicalDebt.breakdown.map((item, index) => (
+              <li key={index} className="text-sm text-gray-300">
+                {item.type}: {item.hours.toFixed(1)}h
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
