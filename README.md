@@ -37,12 +37,12 @@ Visit `http://localhost:3000` to get started.
 
 ## 📚 Documentation
 
-- **[✨ Features](FEATURES.md)** - Complete feature list and key differentiators
-- **[📦 Installation & Setup](INSTALLATION.md)** - Detailed installation and deployment guide
-- **[🏗️ Architecture](ARCHITECTURE.md)** - Technical architecture and deep dive
-- **[🔬 Comparison](COMPARISON.md)** - How Shels compares to other tools
-- **[🏆 Hackathon](HACKATHON.md)** - Hackathon submission details and highlights
-- **[💼 Use Cases](USE_CASES.md)** - Use cases for different teams
+- **[✨ Features](docs/FEATURES.md)** - Complete feature list and key differentiators
+- **[📦 Installation & Setup](docs/INSTALLATION.md)** - Detailed installation and deployment guide
+- **[🏗️ Architecture](docs/ARCHITECTURE.md)** - Technical architecture and deep dive
+- **[🔬 Comparison](docs/COMPARISON.md)** - How Shels compares to other tools
+- **[🏆 Hackathon](docs/HACKATHON.md)** - Hackathon submission details and highlights
+- **[💼 Use Cases](docs/USE_CASES.md)** - Use cases for different teams
 
 ---
 
@@ -103,7 +103,7 @@ Visit `http://localhost:3000` to get started.
 - **Business Impact**: Unique feature connecting code to business metrics - **Innovation**
 - **Advanced Reasoning**: Multi-step reasoning chains for transparency - **Technical Excellence**
 
-📖 **For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
+📖 **For detailed architecture documentation, see [ARCHITECTURE.md](docs/ARCHITECTURE.md)**
 
 ---
 
