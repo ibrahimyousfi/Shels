@@ -20,46 +20,47 @@ export async function GET() {
       return createApiResponse(true, { sessions });
     }
     
-    // Use file storage for local development - SIMPLE VERSION
+    // Use file storage for local development
     try {
-      const files = await fs.readdir(SESSIONS_DIR);
-      const jsonFiles = files.filter(f => f.endsWith('.json'));
-      
-      const sessions: Session[] = [];
-      
-      for (const file of jsonFiles) {
-        try {
-          const filePath = path.join(SESSIONS_DIR, file);
-          const content = await fs.readFile(filePath, 'utf-8');
-          const session = JSON.parse(content);
-          
-          // Ensure required fields
-          if (!session.id) session.id = file.replace('.json', '');
-          if (!session.timestamp) {
+      await fs.mkdir(SESSIONS_DIR, { recursive: true });
+    } catch (e) {
+      // Directory might already exist
+    }
+    
+    const files = await fs.readdir(SESSIONS_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    
+    const sessions: any[] = [];
+    
+    for (const file of jsonFiles) {
+      try {
+        const filePath = path.join(SESSIONS_DIR, file);
+        const content = await fs.readFile(filePath, 'utf-8');
+        const session = JSON.parse(content);
+        
+        // Add missing fields
+        if (!session.id) session.id = file.replace('.json', '');
+        if (!session.timestamp) {
+          try {
             const stats = await fs.stat(filePath);
             session.timestamp = stats.mtime.getTime();
+          } catch {
+            session.timestamp = Date.now();
           }
-          if (!session.name) session.name = session.id;
-          
-          sessions.push(session);
-        } catch (error) {
-          // Skip invalid files
-          continue;
         }
+        if (!session.name) session.name = session.id;
+        
+        sessions.push(session);
+      } catch (e) {
+        // Skip bad files
       }
-      
-      // Sort by timestamp (newest first)
-      sessions.sort((a, b) => b.timestamp - a.timestamp);
-      
-      return createApiResponse(true, { sessions });
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        return createApiResponse(true, { sessions: [] });
-      }
-      throw error;
     }
+    
+    // Sort by timestamp (newest first)
+    sessions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    return createApiResponse(true, { sessions });
   } catch (error: any) {
-    console.error('Error getting sessions:', error);
     return createErrorResponse(error.message || 'Failed to get sessions', 500);
   }
 }
@@ -106,13 +107,11 @@ export async function POST(request: NextRequest) {
     const fileName = `${session.id}.json`;
     const filePath = path.join(SESSIONS_DIR, fileName);
     
-    // Ensure directory exists
     await fs.mkdir(SESSIONS_DIR, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(session, null, 2), 'utf-8');
     
     return createApiResponse(true, { session });
   } catch (error: any) {
-    console.error('Error saving session:', error);
     return createErrorResponse(error.message || 'Failed to save session', 500);
   }
 }
