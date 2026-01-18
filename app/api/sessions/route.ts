@@ -39,36 +39,75 @@ export async function GET() {
       const files = await fs.readdir(SESSIONS_DIR);
       const jsonFiles = files.filter(f => f.endsWith('.json'));
       
+      console.log(`[GET /api/sessions] Found ${jsonFiles.length} JSON files:`, jsonFiles);
+      
       const sessions = await Promise.all(
         jsonFiles.map(async (file) => {
           try {
             const filePath = path.join(SESSIONS_DIR, file);
             const content = await fs.readFile(filePath, 'utf-8');
-            const session = JSON.parse(content);
+            let session;
+            
+            try {
+              session = JSON.parse(content);
+            } catch (parseError) {
+              console.error(`[GET /api/sessions] JSON parse error for ${file}:`, parseError);
+              return null;
+            }
             
             // Ensure session has required fields
             if (!session.id) {
               session.id = file.replace('.json', '');
+              console.log(`[GET /api/sessions] Missing id for ${file}, using: ${session.id}`);
             }
             if (!session.timestamp) {
-              const stats = await fs.stat(filePath);
-              session.timestamp = stats.mtime.getTime();
+              try {
+                const stats = await fs.stat(filePath);
+                session.timestamp = stats.mtime.getTime();
+                console.log(`[GET /api/sessions] Missing timestamp for ${file}, using file mtime: ${session.timestamp}`);
+              } catch (statError) {
+                console.error(`[GET /api/sessions] Error getting stats for ${file}:`, statError);
+                session.timestamp = Date.now();
+              }
             }
             if (!session.name) {
               session.name = session.id;
+              console.log(`[GET /api/sessions] Missing name for ${file}, using id: ${session.name}`);
             }
             
+            // Validate session structure
+            if (!session.results) {
+              console.warn(`[GET /api/sessions] Session ${session.id} missing results field`);
+            }
+            
+            console.log(`[GET /api/sessions] ✓ Loaded session: ${session.id} - ${session.name} (timestamp: ${session.timestamp})`);
             return session;
-          } catch (error) {
-            console.error(`Error reading session file ${file}:`, error);
+          } catch (error: any) {
+            console.error(`[GET /api/sessions] ✗ Error reading session file ${file}:`, error.message || error);
             return null;
           }
         })
       );
       
       const validSessions = sessions
-        .filter(s => s !== null && s.id && s.name)
+        .filter(s => {
+          if (s === null) return false;
+          if (!s.id) {
+            console.warn(`[GET /api/sessions] Filtered out session with missing id:`, s);
+            return false;
+          }
+          if (!s.name) {
+            console.warn(`[GET /api/sessions] Filtered out session with missing name:`, s.id);
+            return false;
+          }
+          return true;
+        })
         .sort((a, b) => b.timestamp - a.timestamp);
+      
+      console.log(`[GET /api/sessions] ✓ Returning ${validSessions.length} valid sessions out of ${sessions.length} total`);
+      validSessions.forEach(s => {
+        console.log(`  - ${s.id}: ${s.name} (${new Date(s.timestamp).toISOString()})`);
+      });
       
       return createApiResponse(true, { sessions: validSessions });
     } catch (dirError: any) {
