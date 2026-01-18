@@ -22,12 +22,31 @@ export async function GET() {
     const files = await fs.readdir(SESSIONS_DIR);
     const jsonFiles = files.filter(f => f.endsWith('.json'));
     
+    console.log(`Found ${jsonFiles.length} session files:`, jsonFiles);
+    
     const sessions = await Promise.all(
       jsonFiles.map(async (file) => {
         try {
           const filePath = path.join(SESSIONS_DIR, file);
           const content = await fs.readFile(filePath, 'utf-8');
-          return JSON.parse(content);
+          const session = JSON.parse(content);
+          
+          // Ensure session has required fields
+          if (!session.id) {
+            console.warn(`Session file ${file} missing id, using filename`);
+            session.id = file.replace('.json', '');
+          }
+          if (!session.timestamp) {
+            console.warn(`Session file ${file} missing timestamp, using file mtime`);
+            const stats = await fs.stat(filePath);
+            session.timestamp = stats.mtime.getTime();
+          }
+          if (!session.name) {
+            console.warn(`Session file ${file} missing name, using id`);
+            session.name = session.id;
+          }
+          
+          return session;
         } catch (error) {
           console.error(`Error reading session file ${file}:`, error);
           return null;
@@ -37,8 +56,10 @@ export async function GET() {
     
     // Filter out null values and sort by timestamp (newest first)
     const validSessions = sessions
-      .filter(s => s !== null)
+      .filter(s => s !== null && s.id && s.name)
       .sort((a, b) => b.timestamp - a.timestamp);
+    
+    console.log(`Returning ${validSessions.length} valid sessions`);
     
     return createApiResponse(true, { sessions: validSessions });
   } catch (error: any) {
