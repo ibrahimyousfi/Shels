@@ -1,56 +1,56 @@
 # 📚 GitHub Wiki Setup Guide
 
-## كيفية إعداد GitHub Wiki للوثائق
+## How to Set Up GitHub Wiki for Documentation
 
-### الخطوة 1: تفعيل Wiki
+### Step 1: Enable Wiki
 
-1. اذهب إلى المستودع على GitHub
-2. اضغط على **Settings** (الإعدادات)
-3. في قسم **Features** (الميزات)
-4. فعّل **Wiki** ✅
-5. احفظ التغييرات
+1. Go to your repository on GitHub
+2. Click on **Settings**
+3. In the sidebar, find **Features**
+4. Enable **Wiki** ✅
+5. Save changes
 
-### الخطوة 2: إنشاء صفحات Wiki
+### Step 2: Create Wiki Pages
 
-بعد تفعيل Wiki، ستجد تبويب **Wiki** بجانب **Code**, **Issues**, إلخ.
+After enabling Wiki, you'll find a **Wiki** tab next to **Code**, **Issues**, etc.
 
-#### الصفحات الموصى بها:
+#### Recommended Pages:
 
-1. **Home** (الصفحة الرئيسية)
-   - الفهرس والتنقل
-   - روابط لجميع الصفحات
+1. **Home** (Main page)
+   - Index and navigation
+   - Links to all pages
 
 2. **Architecture**
-   - محتوى من `ARCHITECTURE.md`
-   - التفاصيل التقنية الكاملة
+   - Content from `ARCHITECTURE.md`
+   - Complete technical details
 
 3. **Features**
-   - محتوى من `FEATURES.md`
-   - الميزات والاختلافات
+   - Content from `FEATURES.md`
+   - Features and differentiators
 
 4. **Installation**
-   - محتوى من `INSTALLATION.md`
-   - دليل التثبيت والنشر
+   - Content from `INSTALLATION.md`
+   - Installation and deployment guide
 
 5. **Comparison**
-   - محتوى من `COMPARISON.md`
-   - المقارنات التقنية
+   - Content from `COMPARISON.md`
+   - Technical comparisons
 
 6. **Hackathon**
-   - محتوى من `HACKATHON.md`
-   - معلومات الهاكاتون
+   - Content from `HACKATHON.md`
+   - Hackathon information
 
 7. **Use-Cases**
-   - محتوى من `USE_CASES.md`
-   - حالات الاستخدام
+   - Content from `USE_CASES.md`
+   - Use cases
 
-### الخطوة 3: نسخ المحتوى
+### Step 3: Copy Content
 
-انسخ محتوى كل ملف `.md` إلى صفحة Wiki المقابلة.
+Copy the content of each `.md` file to the corresponding Wiki page.
 
-### الخطوة 4: تحديث README
+### Step 4: Update README
 
-أضف رابط إلى Wiki في README.md:
+Add a link to Wiki in README.md:
 
 ```markdown
 ## 📚 Documentation
@@ -62,24 +62,24 @@
 
 ---
 
-## ⚠️ ملاحظات مهمة
+## ⚠️ Important Notes
 
-- Wiki منفصل عن المستودع الرئيسي
-- يحتاج تفعيل يدوي من Settings
-- يمكن تحريره مباشرة من GitHub
-- يدعم Markdown كامل
+- Wiki is separate from the main repository
+- Requires manual activation from Settings
+- Can be edited directly from GitHub
+- Supports full Markdown
 
 ---
 
-## 🎯 البديل: GitHub Pages
+## 🎯 Alternative: GitHub Pages
 
-إذا أردت موقع ويب منفصل للوثائق:
+If you want a separate website for documentation:
 
-1. أنشئ مجلد `docs/` في الجذر
-2. ضع ملفات الوثائق فيه
+1. Create a `docs/` folder in the root
+2. Place documentation files in it
 3. Settings → Pages → Source: `docs/`
-4. سيظهر tab "Pages" تلقائياً
+4. "Pages" tab will appear automatically
 
 ---
 
-**الخيار الأفضل**: GitHub Wiki (أسهل وأسرع)
+**Best Option**: GitHub Wiki (easiest and fastest)

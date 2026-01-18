@@ -1,10 +1,10 @@
 # 📚 Wiki Content Templates
 
-استخدم هذه القوالب لنسخ المحتوى إلى GitHub Wiki بعد تفعيله.
+Use these templates to copy content to GitHub Wiki after enabling it.
 
 ---
 
-## Home Page (الصفحة الرئيسية)
+## Home Page
 
 ```markdown
 # 🐚 Shels Documentation
@@ -36,43 +36,43 @@ Welcome to the Shels Wiki! This is the central hub for all documentation.
 
 ## Architecture Page
 
-انسخ محتوى `ARCHITECTURE.md` بالكامل هنا.
+Copy the entire content of `ARCHITECTURE.md` here.
 
 ---
 
 ## Features Page
 
-انسخ محتوى `FEATURES.md` بالكامل هنا.
+Copy the entire content of `FEATURES.md` here.
 
 ---
 
 ## Installation Page
 
-انسخ محتوى `INSTALLATION.md` بالكامل هنا.
+Copy the entire content of `INSTALLATION.md` here.
 
 ---
 
 ## Comparison Page
 
-انسخ محتوى `COMPARISON.md` بالكامل هنا.
+Copy the entire content of `COMPARISON.md` here.
 
 ---
 
 ## Hackathon Page
 
-انسخ محتوى `HACKATHON.md` بالكامل هنا.
+Copy the entire content of `HACKATHON.md` here.
 
 ---
 
 ## Use-Cases Page
 
-انسخ محتوى `USE_CASES.md` بالكامل هنا.
+Copy the entire content of `USE_CASES.md` here.
 
 ---
 
-## 📝 ملاحظات
+## 📝 Notes
 
-- استخدم `[[Page Name]]` للروابط الداخلية في Wiki
-- يمكن تحرير الصفحات مباشرة من GitHub
-- Wiki يدعم Markdown كامل
-- يمكن إضافة صور ومقاطع فيديو
+- Use `[[Page Name]]` for internal links in Wiki
+- Pages can be edited directly from GitHub
+- Wiki supports full Markdown
+- Can add images and videos

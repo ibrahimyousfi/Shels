@@ -1,4 +1,4 @@
-# 📚 Documentation Guide
+# 📚 Documentation Organization Guide
 
 This document explains how to add and organize documentation files in GitHub repositories.
 
@@ -156,4 +156,8 @@ react.wieps/
 
 ---
 
-**Note**: GitHub only auto-detects specific file names (CONTRIBUTING, SECURITY, etc.). Other files appear in the file list but don't get special tabs automatically.
+## 📝 Note
+
+GitHub only auto-detects specific file names (CONTRIBUTING, SECURITY, etc.). Other files appear in the file list but don't get special tabs automatically.
+
+For custom tabs, use **GitHub Wiki** or **GitHub Pages**.
