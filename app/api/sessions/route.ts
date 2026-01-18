@@ -53,6 +53,7 @@ export async function GET() {
     
     return createApiResponse(true, { sessions });
   } catch (error: any) {
+    console.error('Error in GET /api/sessions:', error);
     return createErrorResponse(error.message || 'Failed to get sessions', 500);
   }
 }
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
     
     return createApiResponse(true, { session });
   } catch (error: any) {
+    console.error('Error in POST /api/sessions:', error);
     return createErrorResponse(error.message || 'Failed to save session', 500);
   }
 }
