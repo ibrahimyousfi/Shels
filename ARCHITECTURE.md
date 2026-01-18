@@ -233,7 +233,7 @@ Issue Detected
 │  • What code is affected?                                   │
 └───────────────────────┬─────────────────────────────────────┘
                         │
-                        ▼
+                        ▼ 
 ┌─────────────────────────────────────────────────────────────┐
 │  Step 2: Root Cause Analysis                                │
 │  • Why does this issue exist?                               │
