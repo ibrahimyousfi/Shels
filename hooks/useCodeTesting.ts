@@ -373,9 +373,21 @@ export function useCodeTesting() {
     errorCallback?.({ message: `Session "${session.name}" loaded successfully`, type: 'info' });
   };
 
+  const resetSession = () => {
+    setRepoUrl('');
+    setFiles([]);
+    setTestTypes(['unit', 'integration', 'security']);
+    setDuration('one-time');
+    setAutoFix(false);
+    setResults(null);
+    setCurrentSessionId(null);
+    setMarathonTaskId(null);
+    setProgress({ step: '', percentage: 0 });
+  };
+
   return {
     repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId, currentSessionId,
     setRepoUrl, setFiles, handleTestTypeChange, setDuration, setAutoFix, handleStartTesting,
-    setMarathonTaskId, setErrorCallback, regenerateTimeline, regenerateMetrics, loadSession
+    setMarathonTaskId, setErrorCallback, regenerateTimeline, regenerateMetrics, loadSession, resetSession
   };
 }

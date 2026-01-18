@@ -88,7 +88,7 @@ export default function HomePage() {
   const {
     repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId, currentSessionId,
     setRepoUrl, setFiles, handleTestTypeChange, setDuration, setAutoFix, handleStartTesting,
-    setMarathonTaskId, setErrorCallback, regenerateTimeline, regenerateMetrics, loadSession
+    setMarathonTaskId, setErrorCallback, regenerateTimeline, regenerateMetrics, loadSession, resetSession
   } = useCodeTesting();
 
   useEffect(() => {
@@ -109,7 +109,17 @@ export default function HomePage() {
   };
 
   const handleLoadSession = (session: any) => {
+    if (isAnalyzing) {
+      return; // Prevent switching sessions during analysis
+    }
     loadSession(session);
+  };
+
+  const handleCreateNewSession = () => {
+    if (isAnalyzing) {
+      return; // Prevent creating new session during analysis
+    }
+    resetSession();
   };
 
   return (
@@ -118,6 +128,8 @@ export default function HomePage() {
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onLoadSession={handleLoadSession}
+        onCreateNewSession={handleCreateNewSession}
+        isAnalyzing={isAnalyzing}
         isMobile={isMobile}
       />
       

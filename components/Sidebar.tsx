@@ -8,10 +8,12 @@ interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   onLoadSession?: (session: Session) => void;
+  onCreateNewSession?: () => void;
+  isAnalyzing?: boolean;
   isMobile?: boolean;
 }
 
-export default function Sidebar({ isOpen, onToggle, onLoadSession, isMobile = false }: SidebarProps) {
+export default function Sidebar({ isOpen, onToggle, onLoadSession, onCreateNewSession, isAnalyzing = false, isMobile = false }: SidebarProps) {
   const [isSessionsOpen, setIsSessionsOpen] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -44,7 +46,17 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, isMobile = fa
   };
 
   const handleLoadSession = (session: Session) => {
+    if (isAnalyzing) {
+      return; // Prevent switching sessions during analysis
+    }
     onLoadSession?.(session);
+  };
+
+  const handleCreateNewSession = () => {
+    if (isAnalyzing) {
+      return; // Prevent creating new session during analysis
+    }
+    onCreateNewSession?.();
   };
 
   const filteredSessions = sessions.filter(session =>
@@ -112,6 +124,20 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, isMobile = fa
         </button>
       </div>
 
+      {/* New Session Button */}
+      <div className={`p-4 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 h-0 p-0 overflow-hidden'}`}>
+        <button
+          onClick={handleCreateNewSession}
+          disabled={isAnalyzing}
+          className="w-full bg-[#2f0012] hover:bg-[#4a0020] text-white px-4 py-2 rounded-lg flex items-center gap-2 justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="text-sm font-medium">New Session</span>
+        </button>
+      </div>
+
       {/* Search */}
       <div className={`p-4 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 h-0 p-0 overflow-hidden'}`}>
         <div className="relative">
@@ -158,7 +184,9 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, isMobile = fa
                 <div
                   key={session.id}
                   onClick={() => handleLoadSession(session)}
-                  className="bg-[#1f1f1f] hover:bg-[#2a2a2a] rounded-lg p-3 cursor-pointer transition-colors group"
+                  className={`bg-[#1f1f1f] hover:bg-[#2a2a2a] rounded-lg p-3 transition-colors group ${
+                    isAnalyzing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
