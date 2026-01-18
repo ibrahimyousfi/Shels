@@ -29,23 +29,28 @@ export async function GET() {
     const sessions: any[] = [];
     
     for (const file of jsonFiles) {
-      const filePath = path.join(SESSIONS_DIR, file);
-      const content = await fs.readFile(filePath, 'utf-8');
-      const session = JSON.parse(content);
-      
-      // Add missing fields
-      if (!session.id) session.id = file.replace('.json', '');
-      if (!session.timestamp) {
-        try {
-          const stats = await fs.stat(filePath);
-          session.timestamp = stats.mtime.getTime();
-        } catch {
-          session.timestamp = Date.now();
+      try {
+        const filePath = path.join(SESSIONS_DIR, file);
+        const content = await fs.readFile(filePath, 'utf-8');
+        const session = JSON.parse(content);
+        
+        // Add missing fields
+        if (!session.id) session.id = file.replace('.json', '');
+        if (!session.timestamp) {
+          try {
+            const stats = await fs.stat(filePath);
+            session.timestamp = stats.mtime.getTime();
+          } catch {
+            session.timestamp = Date.now();
+          }
         }
+        if (!session.name) session.name = session.id;
+        
+        sessions.push(session);
+      } catch (e) {
+        // Skip invalid JSON files
+        console.error(`Skipping invalid session file: ${file}`);
       }
-      if (!session.name) session.name = session.id;
-      
-      sessions.push(session);
     }
     
     // Sort by timestamp (newest first)
