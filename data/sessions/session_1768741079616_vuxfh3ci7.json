@@ -956,6 +956,41 @@
         "explanation": "This medium severity bug issue could impact user experience and system reliability.",
         "estimatedCost": {},
         "businessMetrics": {}
+      },
+      "lib/services/repoReader.ts-performance-medium-Sequential recursive API calls. 'readDirectoryRecu": {
+        "issueId": "lib/services/repoReader.ts-performance-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity performance issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "lib/services/repoReader.ts-security-medium-GitHub API Rate Limiting. The fetch calls to GitHu": {
+        "issueId": "lib/services/repoReader.ts-security-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity security issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "lib/services/autoFix.ts-error_handling-medium-Fragile JSON parsing. The service uses a RegExp to": {
+        "estimatedCost": {
+          "revenue": "Potential loss of subscription or feature usage revenue due to user frustration and churn.",
+          "users": "Significant increase in user frustration, leading to higher churn rates, reduced engagement with the `autoFix` feature, and negative sentiment.",
+          "time": "Increased customer support tickets related to autoFix failures (estimated X hours/week), developer time spent debugging and hotfixing (estimated Y hours/week), and wasted user time on retries or manual workarounds.",
+          "reputation": "Severe damage to product reputation for reliability and effectiveness, especially for an AI-powered feature where correct output parsing is fundamental."
+        },
+        "businessMetrics": {
+          "conversion": "Reduced conversion rates from trial users to paid subscriptions if the autoFix feature is a key differentiator or part of the conversion funnel.",
+          "seo": "N/A",
+          "security": "N/A (The primary risk is functional failure, not direct security vulnerability, though fragile parsing can sometimes obscure deeper issues.)",
+          "performance": "Increased latency for autoFix operations as parsing fails and retries occur, potentially leading to higher server load from failed attempts."
+        },
+        "impactScore": 85,
+        "priority": "critical",
+        "explanation": "This issue directly breaks a core `autoFix` functionality by failing to correctly parse AI responses that are common in real-world scenarios. This leads to severe user frustration, increased churn, significant reputational damage for the AI product, and potential revenue loss as users abandon an unreliable feature.",
+        "realWorldExample": "A developer uses the `autoFix` feature in their IDE to resolve a complex bug. The AI assistant generates a correct JSON output containing the fix, but wraps it within standard Markdown code fences (e.g., ` ```json { ... } ``` `) or includes a brief conversational intro before the JSON. Due to the fragile RegExp, the service fails to correctly extract and parse the JSON, resulting in a 'Fix Failed' error message. The developer, unable to utilize the core feature, becomes frustrated, loses trust in the AI's capability, and may seek alternative tools.",
+        "issueId": "lib/services/autoFix.ts-error_handling-medium"
       }
     }
   },
