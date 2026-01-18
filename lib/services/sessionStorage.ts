@@ -11,7 +11,7 @@ export interface Session {
   };
 }
 
-// Save session to server (JSON file)
+// Save session to server (works with both file storage and in-memory cache)
 export async function saveSession(session: Omit<Session, 'id' | 'timestamp'>): Promise<Session> {
   try {
     const response = await fetch('/api/sessions', {

@@ -2,8 +2,13 @@ import { NextRequest } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createApiResponse, createErrorResponse } from '@/lib/utils/apiHelper';
+import { 
+  getSession as getSessionFromCache,
+  deleteSession as deleteSessionFromCache 
+} from '@/lib/services/sessionStorageVercel';
 
 const SESSIONS_DIR = path.join(process.cwd(), 'data', 'sessions');
+const USE_FILE_STORAGE = process.env.NODE_ENV === 'development' || process.env.USE_FILE_STORAGE === 'true';
 
 // GET: Get a specific session by ID
 export async function GET(
