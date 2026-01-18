@@ -37,18 +37,13 @@ Visit `http://localhost:3000` to get started.
 
 ## 📚 Documentation
 
-> **💡 Tip**: Enable [Wiki](https://github.com/ibrahimyousfi/Shels/wiki) in Settings → Features to access documentation as organized tabs!
-
-**Quick Links:**
-- **[📖 Wiki](https://github.com/ibrahimyousfi/Shels/wiki)** - Complete documentation with tabs (enable in Settings)
+- **[📖 Wiki](https://github.com/ibrahimyousfi/Shels/wiki)** - Complete documentation with tabs
 - **[✨ Features](FEATURES.md)** - Complete feature list and key differentiators
 - **[📦 Installation & Setup](INSTALLATION.md)** - Detailed installation and deployment guide
 - **[🏗️ Architecture](ARCHITECTURE.md)** - Technical architecture and deep dive
 - **[🔬 Comparison](COMPARISON.md)** - How Shels compares to other tools
 - **[🏆 Hackathon](HACKATHON.md)** - Hackathon submission details and highlights
 - **[💼 Use Cases](USE_CASES.md)** - Use cases for different teams
-
-> 📖 **Setup Guide**: See [WIKI_GUIDE.md](WIKI_GUIDE.md) for instructions on enabling Wiki tabs
 
 ---
 
