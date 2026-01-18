@@ -1,0 +1,823 @@
+{
+  "id": "session_demo_complete",
+  "name": "Demo Session: Complete Analysis",
+  "timestamp": 1737129600000,
+  "repoUrl": "https://github.com/demo/example-repo",
+  "results": {
+    "analysis": {
+      "totalFiles": 5,
+      "totalLines": 1247,
+      "totalRepoFiles": 15,
+      "ignoredFiles": 10,
+      "issues": [
+        {
+          "type": "security",
+          "severity": "high",
+          "file": "src/auth.js",
+          "line": 42,
+          "description": "SQL Injection vulnerability in user authentication. The query uses string concatenation instead of parameterized queries, allowing attackers to inject malicious SQL code.",
+          "suggestion": "Use parameterized queries or prepared statements to prevent SQL injection attacks."
+        },
+        {
+          "type": "error_handling",
+          "severity": "high",
+          "file": "src/api.js",
+          "line": 78,
+          "description": "Unhandled promise rejection. The async function fetchUserData() doesn't have proper error handling, which could crash the application if the API call fails.",
+          "suggestion": "Add try-catch blocks or .catch() handlers to handle promise rejections gracefully."
+        },
+        {
+          "type": "security",
+          "severity": "medium",
+          "file": "src/utils.js",
+          "line": 15,
+          "description": "XSS vulnerability in user input rendering. User-generated content is directly inserted into HTML without sanitization.",
+          "suggestion": "Sanitize all user inputs before rendering them in HTML, or use a library like DOMPurify."
+        },
+        {
+          "type": "bug",
+          "severity": "medium",
+          "file": "src/database.js",
+          "line": 95,
+          "description": "Race condition in database connection pool. Multiple concurrent requests can exhaust the connection pool, causing timeouts.",
+          "suggestion": "Implement connection pooling limits and queue management for database connections."
+        },
+        {
+          "type": "performance",
+          "severity": "medium",
+          "file": "src/cache.js",
+          "line": 33,
+          "description": "Inefficient cache invalidation strategy. The entire cache is cleared on any update, causing unnecessary cache misses.",
+          "suggestion": "Implement granular cache invalidation based on specific keys or tags."
+        },
+        {
+          "type": "quality",
+          "severity": "low",
+          "file": "src/helpers.js",
+          "line": 12,
+          "description": "Code duplication. The formatDate function is duplicated in multiple files.",
+          "suggestion": "Extract common utility functions into a shared module."
+        }
+      ],
+      "structure": {
+        "mainFiles": [
+          "src/auth.js",
+          "src/api.js",
+          "src/database.js",
+          "src/utils.js",
+          "src/cache.js"
+        ],
+        "dependencies": [
+          "express",
+          "mysql2",
+          "jsonwebtoken",
+          "bcrypt",
+          "axios"
+        ],
+        "architecture": "Node.js REST API with Express framework and MySQL database"
+      },
+      "summary": "The codebase is a Node.js REST API with authentication and database integration. It has several security vulnerabilities including SQL injection and XSS risks. Error handling needs improvement, and there are performance optimization opportunities in caching and database connection management.",
+      "analysisScope": {
+        "analyzedFileTypes": [
+          "JavaScript",
+          "TypeScript"
+        ],
+        "ignoredFileTypes": [
+          "HTML",
+          "CSS",
+          "Images",
+          "Config files",
+          "Documentation"
+        ],
+        "focus": "Executable code with runtime risks"
+      }
+    },
+    "tests": {
+      "unitTests": [
+        {
+          "name": "test_user_authentication",
+          "type": "unit",
+          "file": "src/auth.js",
+          "description": "Test user login with valid credentials",
+          "code": "describe('User Authentication', () => {\n  it('should authenticate user with valid credentials', async () => {\n    const result = await authenticateUser('test@example.com', 'password123');\n    expect(result.success).toBe(true);\n    expect(result.token).toBeDefined();\n  });\n});"
+        },
+        {
+          "name": "test_sql_injection_prevention",
+          "type": "unit",
+          "file": "src/auth.js",
+          "description": "Test that SQL injection attempts are prevented",
+          "code": "describe('SQL Injection Prevention', () => {\n  it('should prevent SQL injection in login', async () => {\n    const maliciousInput = \"' OR '1'='1\";\n    const result = await authenticateUser(maliciousInput, 'password');\n    expect(result.success).toBe(false);\n  });\n});"
+        },
+        {
+          "name": "test_error_handling",
+          "type": "unit",
+          "file": "src/api.js",
+          "description": "Test error handling in API calls",
+          "code": "describe('Error Handling', () => {\n  it('should handle API failures gracefully', async () => {\n    await expect(fetchUserData('invalid-id')).rejects.toThrow();\n  });\n});"
+        }
+      ],
+      "integrationTests": [
+        {
+          "name": "test_auth_flow",
+          "type": "integration",
+          "description": "Test complete authentication flow",
+          "code": "describe('Authentication Flow', () => {\n  it('should complete full auth flow', async () => {\n    const login = await loginUser('user@example.com', 'pass');\n    const token = login.token;\n    const user = await getUserProfile(token);\n    expect(user.email).toBe('user@example.com');\n  });\n});"
+        },
+        {
+          "name": "test_database_connection",
+          "type": "integration",
+          "description": "Test database connection and queries",
+          "code": "describe('Database Integration', () => {\n  it('should connect and query database', async () => {\n    const result = await db.query('SELECT * FROM users LIMIT 1');\n    expect(result.length).toBeGreaterThan(0);\n  });\n});"
+        }
+      ],
+      "securityTests": [
+        {
+          "name": "test_xss_prevention",
+          "type": "security",
+          "description": "Test XSS attack prevention",
+          "code": "describe('XSS Prevention', () => {\n  it('should sanitize user input', () => {\n    const maliciousInput = '<script>alert(\"XSS\")</script>';\n    const sanitized = sanitizeInput(maliciousInput);\n    expect(sanitized).not.toContain('<script>');\n  });\n});"
+        },
+        {
+          "name": "test_sql_injection",
+          "type": "security",
+          "description": "Test SQL injection prevention",
+          "code": "describe('SQL Injection Prevention', () => {\n  it('should prevent SQL injection', async () => {\n    const attack = \"'; DROP TABLE users; --\";\n    await expect(queryUser(attack)).rejects.toThrow();\n  });\n});"
+        },
+        {
+          "name": "test_authentication_bypass",
+          "type": "security",
+          "description": "Test authentication bypass attempts",
+          "code": "describe('Authentication Security', () => {\n  it('should reject invalid tokens', async () => {\n    const invalidToken = 'invalid.token.here';\n    await expect(verifyToken(invalidToken)).rejects.toThrow();\n  });\n});"
+        }
+      ],
+      "performanceTests": [
+        {
+          "name": "test_cache_performance",
+          "type": "performance",
+          "description": "Test cache hit rate and performance",
+          "code": "describe('Cache Performance', () => {\n  it('should improve response time with cache', async () => {\n    const start = Date.now();\n    await getCachedData('key1');\n    const cached = Date.now();\n    await getCachedData('key1');\n    const end = Date.now();\n    expect(end - cached).toBeLessThan(cached - start);\n  });\n});"
+        }
+      ],
+      "total": 9
+    },
+    "testResults": {
+      "passed": 7,
+      "failed": 2,
+      "total": 9,
+      "coverage": {
+        "statements": 78,
+        "branches": 65,
+        "functions": 82,
+        "lines": 76
+      },
+      "details": [
+        {
+          "test": "test_user_authentication",
+          "status": "passed",
+          "duration": 145
+        },
+        {
+          "test": "test_sql_injection_prevention",
+          "status": "failed",
+          "duration": 89,
+          "error": "Expected false but got true - SQL injection not prevented"
+        },
+        {
+          "test": "test_error_handling",
+          "status": "passed",
+          "duration": 67
+        },
+        {
+          "test": "test_auth_flow",
+          "status": "passed",
+          "duration": 234
+        },
+        {
+          "test": "test_database_connection",
+          "status": "passed",
+          "duration": 156
+        },
+        {
+          "test": "test_xss_prevention",
+          "status": "failed",
+          "duration": 45,
+          "error": "XSS vulnerability detected - input not sanitized"
+        },
+        {
+          "test": "test_sql_injection",
+          "status": "passed",
+          "duration": 123
+        },
+        {
+          "test": "test_authentication_bypass",
+          "status": "passed",
+          "duration": 98
+        },
+        {
+          "test": "test_cache_performance",
+          "status": "passed",
+          "duration": 201
+        }
+      ]
+    },
+    "fixes": [
+      {
+        "file": "src/auth.js",
+        "line": 42,
+        "issue": "SQL Injection vulnerability",
+        "originalCode": "const query = `SELECT * FROM users WHERE email = '${email}' AND password = '${password}'`;",
+        "fixedCode": "const query = 'SELECT * FROM users WHERE email = ? AND password = ?';\nconst [rows] = await db.execute(query, [email, password]);",
+        "explanation": "Replaced string concatenation with parameterized queries to prevent SQL injection attacks."
+      },
+      {
+        "file": "src/api.js",
+        "line": 78,
+        "issue": "Unhandled promise rejection",
+        "originalCode": "async function fetchUserData(userId) {\n  const response = await fetch(`/api/users/${userId}`);\n  return response.json();\n}",
+        "fixedCode": "async function fetchUserData(userId) {\n  try {\n    const response = await fetch(`/api/users/${userId}`);\n    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);\n    return await response.json();\n  } catch (error) {\n    console.error('Failed to fetch user data:', error);\n    throw error;\n  }\n}",
+        "explanation": "Added try-catch block to handle promise rejections and HTTP errors gracefully."
+      },
+      {
+        "file": "src/utils.js",
+        "line": 15,
+        "issue": "XSS vulnerability",
+        "originalCode": "element.innerHTML = userInput;",
+        "fixedCode": "element.textContent = userInput;\n// Or use DOMPurify for HTML content:\n// element.innerHTML = DOMPurify.sanitize(userInput);",
+        "explanation": "Replaced innerHTML with textContent to prevent XSS attacks, or use DOMPurify for HTML content."
+      }
+    ],
+    "timeline": {
+      "summary": {
+        "fixNow": 2,
+        "fixSoon": 2,
+        "canWait": 1,
+        "niceToHave": 1
+      },
+      "critical": [
+        {
+          "issue": {
+            "type": "security",
+            "severity": "high",
+            "file": "src/auth.js",
+            "line": 42,
+            "description": "SQL Injection vulnerability in user authentication."
+          },
+          "timeline": "Fix immediately - Critical security risk",
+          "impact": "High - Could lead to complete database compromise and data breach"
+        },
+        {
+          "issue": {
+            "type": "error_handling",
+            "severity": "high",
+            "file": "src/api.js",
+            "line": 78,
+            "description": "Unhandled promise rejection could crash the application."
+          },
+          "timeline": "Fix within 24 hours",
+          "impact": "High - Application crashes could result in service downtime"
+        }
+      ],
+      "high": [
+        {
+          "issue": {
+            "type": "security",
+            "severity": "medium",
+            "file": "src/utils.js",
+            "line": 15,
+            "description": "XSS vulnerability in user input rendering."
+          },
+          "timeline": "Fix within 1 week",
+          "impact": "Medium-High - Could allow attackers to steal user sessions"
+        },
+        {
+          "issue": {
+            "type": "bug",
+            "severity": "medium",
+            "file": "src/database.js",
+            "line": 95,
+            "description": "Race condition in database connection pool."
+          },
+          "timeline": "Fix within 1 week",
+          "impact": "Medium - Could cause timeouts under high load"
+        }
+      ],
+      "medium": [
+        {
+          "issue": {
+            "type": "performance",
+            "severity": "medium",
+            "file": "src/cache.js",
+            "line": 33,
+            "description": "Inefficient cache invalidation strategy."
+          },
+          "timeline": "Fix within 2 weeks",
+          "impact": "Medium - Affects performance but not critical"
+        }
+      ],
+      "low": [
+        {
+          "issue": {
+            "type": "quality",
+            "severity": "low",
+            "file": "src/helpers.js",
+            "line": 12,
+            "description": "Code duplication in formatDate function."
+          },
+          "timeline": "Fix when refactoring",
+          "impact": "Low - Code quality improvement, no functional impact"
+        }
+      ],
+      "recommendations": [
+        "Prioritize fixing SQL injection vulnerability immediately as it poses the highest security risk",
+        "Implement comprehensive error handling across all async functions",
+        "Add input sanitization library (DOMPurify) to prevent XSS attacks",
+        "Review and optimize database connection pooling strategy",
+        "Implement granular cache invalidation to improve performance",
+        "Consider code refactoring to reduce duplication and improve maintainability"
+      ]
+    },
+    "metrics": {
+      "overall": 72,
+      "maintainability": 68,
+      "security": 55,
+      "testability": 80,
+      "performance": 75,
+      "complexity": 65,
+      "recommendations": [
+        "Improve security score by fixing SQL injection and XSS vulnerabilities",
+        "Add more comprehensive error handling to improve maintainability",
+        "Increase test coverage to above 80% for better testability",
+        "Optimize database queries and caching to improve performance",
+        "Reduce code complexity by extracting common utilities"
+      ],
+      "trends": {
+        "improvement": [
+          "Test coverage increased from 65% to 78%",
+          "Code structure improved with better separation of concerns"
+        ],
+        "degradation": [
+          "Security vulnerabilities detected that need immediate attention",
+          "Error handling needs improvement in async functions"
+        ]
+      }
+    },
+    "files": [
+      {
+        "path": "src/auth.js",
+        "content": "const db = require('./database');\nconst jwt = require('jsonwebtoken');\nconst bcrypt = require('bcrypt');\n\nasync function authenticateUser(email, password) {\n  // SQL Injection vulnerability - line 42\n  const query = `SELECT * FROM users WHERE email = '${email}' AND password = '${password}'`;\n  const [rows] = await db.query(query);\n  \n  if (rows.length > 0) {\n    const user = rows[0];\n    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);\n    return { success: true, token, user };\n  }\n  \n  return { success: false, message: 'Invalid credentials' };\n}\n\nmodule.exports = { authenticateUser };",
+        "language": "javascript"
+      },
+      {
+        "path": "src/api.js",
+        "content": "const axios = require('axios');\n\n// Unhandled promise rejection - line 78\nasync function fetchUserData(userId) {\n  const response = await fetch(`/api/users/${userId}`);\n  return response.json();\n}\n\nasync function updateUser(userId, data) {\n  try {\n    const response = await axios.put(`/api/users/${userId}`, data);\n    return response.data;\n  } catch (error) {\n    console.error('Failed to update user:', error);\n    throw error;\n  }\n}\n\nmodule.exports = { fetchUserData, updateUser };",
+        "language": "javascript"
+      },
+      {
+        "path": "src/utils.js",
+        "content": "// XSS vulnerability - line 15\nfunction renderUserContent(userInput, element) {\n  element.innerHTML = userInput;\n}\n\nfunction sanitizeInput(input) {\n  return input.replace(/<script[^>]*>.*?<\\/script>/gi, '');\n}\n\nmodule.exports = { renderUserContent, sanitizeInput };",
+        "language": "javascript"
+      },
+      {
+        "path": "src/database.js",
+        "content": "const mysql = require('mysql2/promise');\n\nconst pool = mysql.createPool({\n  host: process.env.DB_HOST,\n  user: process.env.DB_USER,\n  password: process.env.DB_PASSWORD,\n  database: process.env.DB_NAME,\n  waitForConnections: true,\n  connectionLimit: 10,\n  queueLimit: 0\n});\n\n// Race condition - line 95\nasync function getConnection() {\n  return await pool.getConnection();\n}\n\nmodule.exports = { pool, getConnection };",
+        "language": "javascript"
+      },
+      {
+        "path": "src/cache.js",
+        "content": "const cache = new Map();\n\n// Inefficient cache invalidation - line 33\nfunction invalidateCache() {\n  cache.clear();\n}\n\nfunction getCachedData(key) {\n  return cache.get(key);\n}\n\nfunction setCachedData(key, value) {\n  cache.set(key, value);\n  invalidateCache(); // This clears entire cache\n}\n\nmodule.exports = { getCachedData, setCachedData, invalidateCache };",
+        "language": "javascript"
+      }
+    ],
+    "issueData": {
+      "src/auth.js-security-high-SQL Injection vulnerability in user authentication": {
+        "explainFix": {
+          "whyDangerous": "SQL Injection is one of the most critical security vulnerabilities. Attackers can manipulate SQL queries to access, modify, or delete sensitive data. In this case, an attacker could bypass authentication, access all user records, or even drop entire database tables.",
+          "howToFixManually": "Replace string concatenation with parameterized queries:\n\n```javascript\n// Before (vulnerable):\nconst query = `SELECT * FROM users WHERE email = '${email}' AND password = '${password}'`;\n\n// After (secure):\nconst query = 'SELECT * FROM users WHERE email = ? AND password = ?';\nconst [rows] = await db.execute(query, [email, password]);\n```\n\nThis ensures that user input is treated as data, not executable SQL code.",
+          "impact": "Fixing this vulnerability prevents unauthorized database access, protects user data, and maintains application integrity. Failure to fix could result in complete system compromise.",
+          "priority": "critical",
+          "estimatedTime": "15-30 minutes",
+          "difficulty": "low"
+        },
+        "smartFix": {
+          "fixedCode": "async function authenticateUser(email, password) {\n  // Use parameterized queries to prevent SQL injection\n  const query = 'SELECT * FROM users WHERE email = ? AND password = ?';\n  const [rows] = await db.execute(query, [email, password]);\n  \n  if (rows.length > 0) {\n    const user = rows[0];\n    // Verify password hash instead of plain text\n    const isValidPassword = await bcrypt.compare(password, user.password_hash);\n    if (!isValidPassword) {\n      return { success: false, message: 'Invalid credentials' };\n    }\n    \n    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });\n    return { success: true, token, user: { id: user.id, email: user.email } };\n  }\n  \n  return { success: false, message: 'Invalid credentials' };\n}",
+          "explanation": "The fix implements parameterized queries to prevent SQL injection. Additionally, I've improved the security by using bcrypt password verification instead of plain text comparison, and removed sensitive data from the response.",
+          "businessLogicConsiderations": "The fix maintains the same authentication flow while significantly improving security. Password hashing should already be implemented in the user registration process. Token expiration is added for better security."
+        },
+        "reasoningChain": {
+          "steps": [
+            {
+              "step": 1,
+              "thought": "This is a SQL injection vulnerability in the authentication function. The code directly concatenates user input into a SQL query string.",
+              "analysis": "SQL injection occurs when user input is directly inserted into SQL queries without sanitization. Attackers can inject malicious SQL code like ' OR '1'='1' to bypass authentication.",
+              "conclusion": "This is a critical security vulnerability that must be fixed immediately.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "The best solution is to use parameterized queries (prepared statements) which separate SQL code from data.",
+              "analysis": "Parameterized queries ensure that user input is always treated as data, not executable code. This is the industry standard for preventing SQL injection.",
+              "conclusion": "Replace string concatenation with parameterized queries using placeholders (?).",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "I should also check if passwords are stored as hashes and verify them properly.",
+              "analysis": "The current code compares plain text passwords, which is insecure. Passwords should be hashed and compared using bcrypt.",
+              "conclusion": "Add password hash verification using bcrypt.compare() for additional security.",
+              "confidence": "high"
+            }
+          ],
+          "reasoningPath": "Security vulnerability → SQL injection risk → Parameterized queries → Password security → Complete secure authentication",
+          "finalDecision": "Implement parameterized queries and password hash verification to create a secure authentication system."
+        }
+      },
+      "src/api.js-error_handling-high-Unhandled promise rejection": {
+        "explainFix": {
+          "whyDangerous": "Unhandled promise rejections can crash Node.js applications, especially in production. When an async function fails without proper error handling, the error propagates to the global unhandledRejection handler, which can terminate the entire process.",
+          "howToFixManually": "Wrap async operations in try-catch blocks:\n\n```javascript\nasync function fetchUserData(userId) {\n  try {\n    const response = await fetch(`/api/users/${userId}`);\n    if (!response.ok) {\n      throw new Error(`HTTP error! status: ${response.status}`);\n    }\n    return await response.json();\n  } catch (error) {\n    console.error('Failed to fetch user data:', error);\n    throw error; // Re-throw for caller to handle\n  }\n}\n```",
+          "impact": "Proper error handling prevents application crashes, improves user experience, and makes debugging easier. It also allows for graceful degradation and better error reporting.",
+          "priority": "high",
+          "estimatedTime": "10-15 minutes",
+          "difficulty": "low"
+        },
+        "smartFix": {
+          "fixedCode": "async function fetchUserData(userId) {\n  try {\n    const response = await fetch(`/api/users/${userId}`, {\n      headers: {\n        'Content-Type': 'application/json',\n        'Authorization': `Bearer ${getAuthToken()}`\n      }\n    });\n    \n    if (!response.ok) {\n      const errorData = await response.json().catch(() => ({}));\n      throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);\n    }\n    \n    return await response.json();\n  } catch (error) {\n    // Log error for monitoring\n    console.error(`Failed to fetch user data for userId ${userId}:`, error);\n    \n    // Return a structured error response\n    throw new Error(`Unable to fetch user data: ${error.message}`);\n  }\n}",
+          "explanation": "Added comprehensive error handling with try-catch, HTTP status checking, and proper error logging. Also added authentication headers and structured error responses.",
+          "businessLogicConsiderations": "The fix maintains the same function signature and return type, so it's a drop-in replacement. Error messages are now more descriptive for debugging. Consider implementing retry logic for transient network errors."
+        },
+        "reasoningChain": {
+          "steps": [
+            {
+              "step": 1,
+              "thought": "The function fetchUserData doesn't handle errors from the fetch API or JSON parsing.",
+              "analysis": "If the fetch fails (network error) or response.json() fails (invalid JSON), the promise will reject without being caught, potentially crashing the application.",
+              "conclusion": "This needs error handling to prevent unhandled promise rejections.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "I should check the HTTP response status before parsing JSON.",
+              "analysis": "The fetch API doesn't reject on HTTP error statuses (4xx, 5xx), so we need to manually check response.ok.",
+              "conclusion": "Add response.ok check and throw appropriate errors for HTTP failures.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "Error logging and structured error messages will help with debugging.",
+              "analysis": "Good error messages and logging make it easier to diagnose issues in production.",
+              "conclusion": "Add comprehensive error logging and descriptive error messages.",
+              "confidence": "medium"
+            }
+          ],
+          "reasoningPath": "Unhandled rejection → Error handling needed → HTTP status checking → Error logging → Complete error handling",
+          "finalDecision": "Implement try-catch with HTTP status checking and proper error logging for robust error handling."
+        }
+      },
+      "src/utils.js-security-medium-XSS vulnerability in user input rendering": {
+        "explainFix": {
+          "whyDangerous": "Cross-Site Scripting (XSS) allows attackers to inject malicious JavaScript code into web pages. This can lead to session hijacking, data theft, or defacement of the website. When user input is directly inserted into HTML using innerHTML, any script tags or event handlers in the input will execute.",
+          "howToFixManually": "Use textContent instead of innerHTML for plain text, or sanitize HTML:\n\n```javascript\n// For plain text:\nelement.textContent = userInput;\n\n// For HTML content (use DOMPurify):\nconst DOMPurify = require('isomorphic-dompurify');\nelement.innerHTML = DOMPurify.sanitize(userInput);\n```",
+          "impact": "Preventing XSS attacks protects user sessions, prevents data theft, and maintains user trust. It's essential for any application that displays user-generated content.",
+          "priority": "high",
+          "estimatedTime": "20-30 minutes",
+          "difficulty": "medium"
+        },
+        "smartFix": {
+          "fixedCode": "const DOMPurify = require('isomorphic-dompurify');\n\nfunction renderUserContent(userInput, element, allowHTML = false) {\n  if (allowHTML) {\n    // Sanitize HTML content to prevent XSS\n    element.innerHTML = DOMPurify.sanitize(userInput, {\n      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a'],\n      ALLOWED_ATTR: ['href', 'title']\n    });\n  } else {\n    // For plain text, use textContent (safest)\n    element.textContent = userInput;\n  }\n}\n\nfunction sanitizeInput(input) {\n  // Remove script tags and event handlers\n  return input\n    .replace(/<script[^>]*>.*?<\\/script>/gi, '')\n    .replace(/on\\w+=\\s*[\"'][^\"']*[\"']/gi, '')\n    .replace(/javascript:/gi, '');\n}\n\nmodule.exports = { renderUserContent, sanitizeInput };",
+          "explanation": "Implemented a flexible solution that allows both plain text and sanitized HTML rendering. For plain text, textContent is used (safest). For HTML, DOMPurify sanitizes the content while allowing safe HTML tags. Added a basic sanitizeInput function as a fallback.",
+          "businessLogicConsiderations": "The function now supports both plain text and HTML rendering based on use case. DOMPurify is a well-maintained library trusted by major companies. Consider whitelisting specific HTML tags based on your content requirements."
+        },
+        "reasoningChain": {
+          "steps": [
+            {
+              "step": 1,
+              "thought": "Using innerHTML with unsanitized user input is a classic XSS vulnerability.",
+              "analysis": "Any script tags, event handlers (onclick, onerror), or javascript: URLs in the user input will execute in the browser context, potentially stealing cookies or session tokens.",
+              "conclusion": "This is a security vulnerability that needs to be fixed.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "The best approach depends on whether we need to render HTML or just plain text.",
+              "analysis": "If we only need plain text, textContent is the safest option. If we need HTML formatting, we should use a sanitization library like DOMPurify.",
+              "conclusion": "Implement a flexible solution that supports both use cases.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "We should also provide a basic sanitization function as a fallback.",
+              "analysis": "While DOMPurify is comprehensive, having a basic sanitization function can be useful for simple cases or as a defense-in-depth measure.",
+              "conclusion": "Add both DOMPurify for HTML and a basic sanitizeInput function.",
+              "confidence": "medium"
+            }
+          ],
+          "reasoningPath": "XSS vulnerability → innerHTML risk → Sanitization needed → DOMPurify for HTML → textContent for plain text → Complete XSS prevention",
+          "finalDecision": "Implement flexible content rendering with DOMPurify for HTML and textContent for plain text to prevent XSS attacks."
+        }
+      },
+      "src/database.js-bug-medium-Race condition in database connection pool": {
+        "explainFix": {
+          "whyDangerous": "Race conditions in database connection pools can cause connection exhaustion, leading to application timeouts and service degradation. When multiple concurrent requests compete for limited database connections without proper queuing, some requests may fail or hang indefinitely, resulting in poor user experience and potential data loss.",
+          "howToFixManually": "Implement proper connection pool management:\n\n```javascript\nconst pool = mysql.createPool({\n  host: process.env.DB_HOST,\n  user: process.env.DB_USER,\n  password: process.env.DB_PASSWORD,\n  database: process.env.DB_NAME,\n  waitForConnections: true,\n  connectionLimit: 10,\n  queueLimit: 50, // Limit queue size\n  acquireTimeout: 60000, // 60 seconds timeout\n  timeout: 60000\n});\n\n// Use connection with proper error handling\nasync function getConnection() {\n  try {\n    const connection = await pool.getConnection();\n    return connection;\n  } catch (error) {\n    if (error.code === 'PROTOCOL_CONNECTION_LOST' || error.code === 'ECONNREFUSED') {\n      // Handle connection errors\n      throw new Error('Database connection failed');\n    }\n    throw error;\n  }\n}\n```",
+          "impact": "Proper connection pool management prevents timeouts, improves application reliability, and ensures consistent performance under high load. It also prevents connection leaks and resource exhaustion.",
+          "priority": "medium",
+          "estimatedTime": "30-45 minutes",
+          "difficulty": "medium"
+        },
+        "smartFix": {
+          "fixedCode": "const mysql = require('mysql2/promise');\n\nconst pool = mysql.createPool({\n  host: process.env.DB_HOST,\n  user: process.env.DB_USER,\n  password: process.env.DB_PASSWORD,\n  database: process.env.DB_NAME,\n  waitForConnections: true,\n  connectionLimit: 10,\n  queueLimit: 50,\n  acquireTimeout: 60000,\n  timeout: 60000,\n  enableKeepAlive: true,\n  keepAliveInitialDelay: 0\n});\n\n// Connection wrapper with automatic release\nasync function withConnection(callback) {\n  let connection;\n  try {\n    connection = await pool.getConnection();\n    return await callback(connection);\n  } catch (error) {\n    console.error('Database operation failed:', error);\n    throw error;\n  } finally {\n    if (connection) {\n      connection.release();\n    }\n  }\n}\n\n// Improved getConnection with retry logic\nasync function getConnection(maxRetries = 3) {\n  for (let i = 0; i < maxRetries; i++) {\n    try {\n      const connection = await pool.getConnection();\n      return connection;\n    } catch (error) {\n      if (i === maxRetries - 1) throw error;\n      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));\n    }\n  }\n}\n\nmodule.exports = { pool, getConnection, withConnection };",
+          "explanation": "Implemented comprehensive connection pool management with queue limits, timeouts, and automatic connection release. Added a withConnection wrapper for automatic cleanup and retry logic for transient connection failures. Keep-alive is enabled to maintain connection health.",
+          "businessLogicConsiderations": "The withConnection wrapper ensures connections are always released, preventing leaks. Retry logic handles transient network issues. Queue limits prevent unbounded memory growth. Consider monitoring connection pool metrics in production."
+        },
+        "reasoningChain": {
+          "steps": [
+            {
+              "step": 1,
+              "thought": "The current connection pool implementation doesn't have proper limits or error handling.",
+              "analysis": "Without queue limits and proper error handling, concurrent requests can exhaust the connection pool, causing timeouts and application failures.",
+              "conclusion": "We need to add connection pool limits and error handling.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "Connections should be automatically released to prevent leaks.",
+              "analysis": "If connections aren't properly released, they accumulate and eventually exhaust the pool, even if they're not being used.",
+              "conclusion": "Implement a wrapper function that automatically releases connections.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "Transient connection failures should be retried.",
+              "analysis": "Network issues or temporary database unavailability shouldn't immediately fail requests. Retry logic can handle these cases.",
+              "conclusion": "Add retry logic with exponential backoff for connection acquisition.",
+              "confidence": "medium"
+            }
+          ],
+          "reasoningPath": "Race condition → Connection pool exhaustion → Queue limits → Automatic release → Retry logic → Robust connection management",
+          "finalDecision": "Implement connection pool with queue limits, automatic connection release, and retry logic to prevent race conditions and connection exhaustion."
+        }
+      },
+      "src/cache.js-performance-medium-Inefficient cache invalidation strategy": {
+        "explainFix": {
+          "whyDangerous": "Clearing the entire cache on any update causes unnecessary cache misses, leading to increased database load, slower response times, and poor user experience. This defeats the purpose of caching and can cause performance degradation, especially under high traffic.",
+          "howToFixManually": "Implement granular cache invalidation:\n\n```javascript\nconst cache = new Map();\nconst cacheTags = new Map(); // Track tags for each key\n\nfunction setCachedData(key, value, tags = []) {\n  cache.set(key, value);\n  if (tags.length > 0) {\n    tags.forEach(tag => {\n      if (!cacheTags.has(tag)) cacheTags.set(tag, new Set());\n      cacheTags.get(tag).add(key);\n    });\n  }\n}\n\nfunction invalidateCacheByTag(tag) {\n  const keys = cacheTags.get(tag);\n  if (keys) {\n    keys.forEach(key => cache.delete(key));\n    cacheTags.delete(tag);\n  }\n}\n\nfunction invalidateCacheByKey(key) {\n  cache.delete(key);\n}\n```",
+          "impact": "Granular cache invalidation improves cache hit rates, reduces database load, and improves application performance. It allows selective cache updates without affecting unrelated cached data.",
+          "priority": "medium",
+          "estimatedTime": "45-60 minutes",
+          "difficulty": "medium"
+        },
+        "smartFix": {
+          "fixedCode": "const cache = new Map();\nconst cacheTags = new Map(); // tag -> Set of keys\nconst keyTags = new Map(); // key -> Set of tags\nconst cacheTimestamps = new Map(); // key -> timestamp\n\nconst DEFAULT_TTL = 3600000; // 1 hour\n\nfunction setCachedData(key, value, options = {}) {\n  const { tags = [], ttl = DEFAULT_TTL } = options;\n  \n  cache.set(key, value);\n  cacheTimestamps.set(key, Date.now());\n  \n  // Remove old tags for this key\n  const oldTags = keyTags.get(key) || new Set();\n  oldTags.forEach(tag => {\n    const tagKeys = cacheTags.get(tag);\n    if (tagKeys) tagKeys.delete(key);\n  });\n  \n  // Add new tags\n  const newTags = new Set(tags);\n  keyTags.set(key, newTags);\n  tags.forEach(tag => {\n    if (!cacheTags.has(tag)) cacheTags.set(tag, new Set());\n    cacheTags.get(tag).add(key);\n  });\n  \n  // Auto-expire after TTL\n  setTimeout(() => {\n    invalidateCacheByKey(key);\n  }, ttl);\n}\n\nfunction getCachedData(key) {\n  const timestamp = cacheTimestamps.get(key);\n  if (!timestamp) return undefined;\n  \n  // Check if expired\n  const age = Date.now() - timestamp;\n  const ttl = DEFAULT_TTL;\n  if (age > ttl) {\n    invalidateCacheByKey(key);\n    return undefined;\n  }\n  \n  return cache.get(key);\n}\n\nfunction invalidateCacheByTag(tag) {\n  const keys = cacheTags.get(tag);\n  if (keys) {\n    keys.forEach(key => {\n      cache.delete(key);\n      cacheTimestamps.delete(key);\n      keyTags.delete(key);\n    });\n    cacheTags.delete(tag);\n  }\n}\n\nfunction invalidateCacheByKey(key) {\n  const tags = keyTags.get(key);\n  if (tags) {\n    tags.forEach(tag => {\n      const tagKeys = cacheTags.get(tag);\n      if (tagKeys) tagKeys.delete(key);\n    });\n    keyTags.delete(key);\n  }\n  cache.delete(key);\n  cacheTimestamps.delete(key);\n}\n\nfunction clearExpiredCache() {\n  const now = Date.now();\n  for (const [key, timestamp] of cacheTimestamps.entries()) {\n    if (now - timestamp > DEFAULT_TTL) {\n      invalidateCacheByKey(key);\n    }\n  }\n}\n\n// Run cleanup every 10 minutes\nsetInterval(clearExpiredCache, 600000);\n\nmodule.exports = { \n  getCachedData, \n  setCachedData, \n  invalidateCacheByTag, \n  invalidateCacheByKey \n};",
+          "explanation": "Implemented a sophisticated caching system with tag-based invalidation, TTL support, and automatic expiration. Tags allow grouping related cache entries for efficient bulk invalidation. TTL ensures stale data is automatically removed.",
+          "businessLogicConsiderations": "The tag-based system allows invalidating related cache entries together (e.g., all user-related data when a user updates). TTL prevents memory leaks from never-expiring cache entries. Consider adding cache size limits and LRU eviction for production use."
+        },
+        "reasoningChain": {
+          "steps": [
+            {
+              "step": 1,
+              "thought": "Clearing the entire cache on any update is inefficient and defeats the purpose of caching.",
+              "analysis": "When one piece of data changes, we shouldn't invalidate unrelated cached data. This causes unnecessary cache misses and database queries.",
+              "conclusion": "We need granular cache invalidation based on specific keys or relationships.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "Tag-based invalidation would allow grouping related cache entries.",
+              "analysis": "Tags can represent logical groups (e.g., 'user:123', 'product:456'). When a user updates, we invalidate all 'user:123' tagged entries.",
+              "conclusion": "Implement tag-based cache invalidation system.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "Cache entries should have expiration times to prevent stale data.",
+              "analysis": "Without TTL, cache entries never expire, which can lead to serving stale data and memory leaks.",
+              "conclusion": "Add TTL (Time To Live) support with automatic expiration.",
+              "confidence": "medium"
+            }
+          ],
+          "reasoningPath": "Inefficient invalidation → Granular invalidation needed → Tag-based system → TTL support → Complete cache management",
+          "finalDecision": "Implement tag-based cache invalidation with TTL support for efficient and automatic cache management."
+        }
+      },
+      "src/helpers.js-quality-low-Code duplication": {
+        "explainFix": {
+          "whyDangerous": "Code duplication makes maintenance difficult, increases the risk of bugs, and violates the DRY (Don't Repeat Yourself) principle. When the same logic exists in multiple places, fixing bugs or making improvements requires changes in multiple locations, increasing the chance of inconsistencies and errors.",
+          "howToFixManually": "Extract common functions into a shared utility module:\n\n```javascript\n// utils/dateHelpers.js\nfunction formatDate(date, format = 'YYYY-MM-DD') {\n  const d = new Date(date);\n  const year = d.getFullYear();\n  const month = String(d.getMonth() + 1).padStart(2, '0');\n  const day = String(d.getDate()).padStart(2, '0');\n  \n  return format\n    .replace('YYYY', year)\n    .replace('MM', month)\n    .replace('DD', day);\n}\n\nmodule.exports = { formatDate };\n\n// Then import in files that need it:\nconst { formatDate } = require('./utils/dateHelpers');\n```",
+          "impact": "Eliminating code duplication improves maintainability, reduces bugs, and makes the codebase easier to understand. It also ensures consistent behavior across the application.",
+          "priority": "low",
+          "estimatedTime": "20-30 minutes",
+          "difficulty": "low"
+        },
+        "smartFix": {
+          "fixedCode": "// utils/dateHelpers.js\nconst dateHelpers = {\n  formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {\n    if (!date) return null;\n    \n    const d = new Date(date);\n    if (isNaN(d.getTime())) return null;\n    \n    const year = d.getFullYear();\n    const month = String(d.getMonth() + 1).padStart(2, '0');\n    const day = String(d.getDate()).padStart(2, '0');\n    const hours = String(d.getHours()).padStart(2, '0');\n    const minutes = String(d.getMinutes()).padStart(2, '0');\n    const seconds = String(d.getSeconds()).padStart(2, '0');\n    \n    return format\n      .replace('YYYY', year)\n      .replace('MM', month)\n      .replace('DD', day)\n      .replace('HH', hours)\n      .replace('mm', minutes)\n      .replace('ss', seconds);\n  },\n  \n  formatRelativeTime(date) {\n    const now = new Date();\n    const diff = now - new Date(date);\n    const seconds = Math.floor(diff / 1000);\n    const minutes = Math.floor(seconds / 60);\n    const hours = Math.floor(minutes / 60);\n    const days = Math.floor(hours / 24);\n    \n    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;\n    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;\n    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;\n    return 'Just now';\n  },\n  \n  isValidDate(date) {\n    return date instanceof Date && !isNaN(date.getTime());\n  }\n};\n\nmodule.exports = dateHelpers;\n\n// Usage in other files:\n// const { formatDate, formatRelativeTime } = require('./utils/dateHelpers');",
+          "explanation": "Created a comprehensive date utility module with formatDate, formatRelativeTime, and isValidDate functions. The formatDate function supports multiple format patterns and includes null/validation checks. Added formatRelativeTime for user-friendly relative dates.",
+          "businessLogicConsiderations": "The utility module can be extended with more date functions as needed. Consider using a library like date-fns or moment.js for production if more advanced date operations are required. The current implementation is lightweight and sufficient for basic needs."
+        },
+        "reasoningChain": {
+          "steps": [
+            {
+              "step": 1,
+              "thought": "Code duplication makes maintenance difficult.",
+              "analysis": "When the same function exists in multiple files, any bug fix or improvement must be applied in all locations, which is error-prone and time-consuming.",
+              "conclusion": "Extract duplicated code into a shared utility module.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "The shared utility should be comprehensive and handle edge cases.",
+              "analysis": "A well-designed utility function should handle null values, invalid dates, and provide flexibility in formatting options.",
+              "conclusion": "Create a robust date utility module with validation and multiple format options.",
+              "confidence": "medium"
+            },
+            {
+              "step": 3,
+              "thought": "We can add more useful date functions while we're at it.",
+              "analysis": "Since we're creating a date utility module, we can add related functions like formatRelativeTime that might be useful elsewhere.",
+              "conclusion": "Include additional date utility functions for completeness.",
+              "confidence": "low"
+            }
+          ],
+          "reasoningPath": "Code duplication → Extract to utility → Comprehensive utility → Additional functions → Complete date utility module",
+          "finalDecision": "Extract duplicated date formatting code into a comprehensive shared utility module with validation and multiple formatting options."
+        }
+      },
+      "src/api.js-error_handling-high-Unhandled promise rejection. The async function fe": {
+        "explainFix": {
+          "issue": {
+            "type": "error_handling",
+            "severity": "high",
+            "file": "src/api.js",
+            "line": 78,
+            "description": "Unhandled promise rejection. The async function fetchUserData() doesn't have proper error handling, which could crash the application if the API call fails.",
+            "suggestion": "Add try-catch blocks or .catch() handlers to handle promise rejections gracefully."
+          },
+          "whyDangerous": "This error_handling issue (high severity) needs attention.",
+          "howToFixManually": "Add try-catch blocks or .catch() handlers to handle promise rejections gracefully.",
+          "impact": "This issue may affect code quality, security, or functionality.",
+          "priority": "high",
+          "estimatedTime": "Unknown",
+          "difficulty": "medium"
+        }
+      },
+      "src/cache.js-performance-medium-Inefficient cache invalidation strategy. The entir": {
+        "explainFix": {
+          "issue": {
+            "type": "performance",
+            "severity": "medium",
+            "file": "src/cache.js",
+            "line": 33,
+            "description": "Inefficient cache invalidation strategy. The entire cache is cleared on any update, causing unnecessary cache misses.",
+            "suggestion": "Implement granular cache invalidation based on specific keys or tags."
+          },
+          "whyDangerous": "This performance issue (medium severity) needs attention.",
+          "howToFixManually": "Implement granular cache invalidation based on specific keys or tags.",
+          "impact": "This issue may affect code quality, security, or functionality.",
+          "priority": "medium",
+          "estimatedTime": "Unknown",
+          "difficulty": "medium"
+        }
+      }
+    },
+    "businessImpactData": {
+      "src/utils.js-security-medium-XSS vulnerability in user input rendering": {
+        "impactScore": 75,
+        "priority": "high",
+        "explanation": "XSS vulnerabilities can lead to session hijacking, data theft, and account takeovers. This directly impacts user trust and can result in significant security breaches affecting thousands of users.",
+        "estimatedCost": {
+          "revenue": "15-30% drop in user trust and conversions",
+          "users": "5-10% potential user churn if exploited",
+          "time": "2-4 hours/week for security monitoring and incident response",
+          "reputation": "High - Security breach could damage brand reputation"
+        },
+        "businessMetrics": {
+          "conversion": "10-20% drop in form submissions if users lose trust",
+          "seo": "N/A",
+          "security": "Critical XSS attack vector - high risk",
+          "performance": "N/A"
+        },
+        "realWorldExample": "If an attacker exploits this XSS vulnerability, they could inject malicious scripts that steal user session cookies. This could lead to account takeovers affecting 10,000+ users, resulting in data breaches, financial losses, and severe reputation damage."
+      },
+      "src/database.js-bug-medium-Race condition in database connection pool": {
+        "impactScore": 60,
+        "priority": "medium",
+        "explanation": "Connection pool exhaustion can cause application timeouts and service degradation, leading to poor user experience, increased bounce rates, and potential revenue loss during peak traffic periods.",
+        "estimatedCost": {
+          "revenue": "10-20% revenue loss during peak hours due to timeouts",
+          "users": "3-5% bounce rate increase when connections fail",
+          "time": "1-2 hours/week debugging timeout issues",
+          "reputation": "Medium - Users experience slow or failed requests"
+        },
+        "businessMetrics": {
+          "conversion": "5-10% drop during high traffic periods",
+          "seo": "N/A",
+          "security": "N/A",
+          "performance": "500ms-2s delay per request during connection exhaustion"
+        },
+        "realWorldExample": "During a flash sale or viral marketing campaign, concurrent user requests could exhaust the database connection pool. Users would experience 5-10 second delays or complete request failures, leading to abandoned carts and lost sales worth thousands of dollars."
+      },
+      "src/cache.js-performance-medium-Inefficient cache invalidation strategy": {
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "Inefficient cache invalidation increases database load and slows response times, affecting user experience and increasing infrastructure costs. This becomes more critical as traffic scales.",
+        "estimatedCost": {
+          "revenue": "5-10% slower page loads could reduce conversions",
+          "users": "2-3% bounce rate increase due to slow performance",
+          "time": "30 minutes/week for performance optimization",
+          "reputation": "Low - Gradual performance degradation"
+        },
+        "businessMetrics": {
+          "conversion": "3-5% drop due to slower page loads",
+          "seo": "Page speed penalty could affect rankings",
+          "security": "N/A",
+          "performance": "200-500ms additional latency per request"
+        },
+        "realWorldExample": "When a single product is updated, the entire cache is cleared. This forces all subsequent requests to hit the database, causing 500ms+ delays. During peak shopping hours, this could result in 30-40% slower page loads, leading to frustrated users and abandoned purchases."
+      },
+      "src/helpers.js-quality-low-Code duplication": {
+        "impactScore": 25,
+        "priority": "low",
+        "explanation": "Code duplication increases maintenance overhead and the risk of inconsistencies, but has minimal direct impact on users. However, it slows down development velocity and increases technical debt over time.",
+        "estimatedCost": {
+          "revenue": "N/A - No direct revenue impact",
+          "users": "N/A - No user-facing impact",
+          "time": "15-30 minutes/week for duplicate maintenance",
+          "reputation": "N/A"
+        },
+        "businessMetrics": {
+          "conversion": "N/A",
+          "seo": "N/A",
+          "security": "N/A",
+          "performance": "N/A"
+        },
+        "realWorldExample": "When a bug is found in the formatDate function, developers must fix it in 3 different files. If one location is missed, inconsistent behavior occurs. Over 6 months, this could waste 10-15 hours of development time that could be spent on new features."
+      },
+      "src/database.js-bug-medium-Race condition in database connection pool. Multip": {
+        "issueId": "src/database.js-bug-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity bug issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "src/utils.js-security-medium-XSS vulnerability in user input rendering. User-ge": {
+        "issueId": "src/utils.js-security-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity security issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "src/auth.js-security-high-SQL Injection vulnerability in user authentication": {
+        "issueId": "src/auth.js-security-high",
+        "impactScore": 75,
+        "priority": "high",
+        "explanation": "This high severity security issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "src/cache.js-performance-medium-Inefficient cache invalidation strategy. The entir": {
+        "issueId": "src/cache.js-performance-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity performance issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "src/helpers.js-quality-low-Code duplication. The formatDate function is dupli": {
+        "issueId": "src/helpers.js-quality-low",
+        "impactScore": 25,
+        "priority": "low",
+        "explanation": "This low severity quality issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "src/api.js-error_handling-high-Unhandled promise rejection. The async function fe": {
+        "issueId": "src/api.js-error_handling-high",
+        "impactScore": 75,
+        "priority": "high",
+        "explanation": "This high severity error_handling issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "lib/services/codeAnalyzer.ts-bug-medium-Inconsistent Issue Mapping. The 'CodeIssue' interf": {
+        "issueId": "lib/services/codeAnalyzer.ts-bug-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity bug issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      }
+    },
+    "marathonTask": null
+  },
+  "config": {
+    "testTypes": [
+      "unit",
+      "integration",
+      "security",
+      "performance"
+    ],
+    "duration": "one-time",
+    "autoFix": true
+  }
+}

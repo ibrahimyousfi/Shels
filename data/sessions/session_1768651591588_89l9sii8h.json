@@ -1,0 +1,232 @@
+{
+  "id": "session_1768651591588_89l9sii8h",
+  "name": "Analysis: adflix",
+  "timestamp": 1768651591588,
+  "repoUrl": "https://github.com/ibrahimyousfi/adflix",
+  "results": {
+    "analysis": {
+      "totalFiles": 3,
+      "totalLines": 196,
+      "issues": [
+        {
+          "type": "error_handling",
+          "severity": "high",
+          "file": "common.js",
+          "line": 15,
+          "description": "Potential null pointer exceptions in initCountdown. The code accesses properties like .textContent and .style on results of document.querySelector without verifying if the elements exist.",
+          "suggestion": "Add null checks for all properties in the 'elements' object before accessing them, or use optional chaining consistently."
+        },
+        {
+          "type": "security",
+          "severity": "medium",
+          "file": "facebook-pixel.js",
+          "line": 16,
+          "description": "Information leakage/Tracking Hijack. The function initFacebookPixelWithPurchase allows the pixel_id to be overridden via a URL query parameter, allowing an attacker to redirect tracking data to their own pixel.",
+          "suggestion": "Do not allow sensitive configuration like pixel IDs to be set directly via URL parameters without a whitelist."
+        },
+        {
+          "type": "security",
+          "severity": "medium",
+          "file": "common.js",
+          "line": 48,
+          "description": "Potential Cross-Site Scripting (XSS). The getVideoIframe function uses template literals to inject 'videoId' and 'title' directly into an HTML string. If these parameters are derived from URL inputs, it could lead to script injection.",
+          "suggestion": "Sanitize the title and videoId inputs or use document.createElement to build the iframe and set attributes programmatically."
+        },
+        {
+          "type": "bug",
+          "severity": "medium",
+          "file": "common.js",
+          "line": 86,
+          "description": "Race condition in form submission. The window.location.href redirect occurs after a hardcoded 200ms timeout regardless of whether the fetch request to googleScriptUrl has completed or failed.",
+          "suggestion": "Since mode is 'no-cors', the response isn't readable, but it is better to await the fetch promise or use a longer delay/callback to ensure the request is dispatched by the browser."
+        },
+        {
+          "type": "quality",
+          "severity": "low",
+          "file": "facebook-pixel.js",
+          "line": 2,
+          "description": "Code duplication. The Facebook Pixel initialization snippet (the IIFE) is identical in both functions.",
+          "suggestion": "Extract the initialization logic into a private helper function."
+        },
+        {
+          "type": "bug",
+          "severity": "low",
+          "file": "common.js",
+          "line": 17,
+          "description": "Division by zero risk. If initialTime is passed as 0 or undefined, the progress bar width calculation will result in NaN.",
+          "suggestion": "Add a check to ensure initialTime > 0 before performing the division."
+        },
+        {
+          "type": "performance",
+          "severity": "low",
+          "file": "common.js",
+          "line": 20,
+          "description": "Interval memory leak. The setInterval in initCountdown is never cleared if the user navigates away or if the script is re-initialized on a SPA.",
+          "suggestion": "Return the interval ID or a cleanup function from initCountdown so it can be cleared if necessary."
+        }
+      ],
+      "structure": {
+        "mainFiles": [
+          "common.js",
+          "facebook-pixel.js",
+          "header.js"
+        ],
+        "dependencies": [
+          "Wistia Player API",
+          "Facebook Pixel SDK",
+          "Google Apps Script (External Endpoint)"
+        ],
+        "architecture": "Vanilla JavaScript utility library for marketing landing pages and sales funnels."
+      },
+      "summary": "The codebase is a lightweight set of utilities for managing landing page features like countdowns, video embeds, and tracking. While functional, it lacks robust error handling for DOM operations, making it brittle if specific HTML elements are missing. There are also minor security concerns regarding tracking hijacking and XSS via unsanitized string interpolation. Code quality is generally okay for small-scale projects, but it relies heavily on global scope and lacks modular encapsulation.",
+      "analysisScope": {
+        "analyzedFileTypes": [
+          "JavaScript",
+          "TypeScript",
+          "Python",
+          "Java",
+          "C++",
+          "C#",
+          "Go",
+          "Rust",
+          "PHP",
+          "Ruby",
+          "Swift",
+          "Kotlin"
+        ],
+        "ignoredFileTypes": [
+          "HTML",
+          "CSS",
+          "Images",
+          "Config files",
+          "Git files",
+          "Documentation"
+        ],
+        "focus": "Executable code with runtime risks"
+      },
+      "totalRepoFiles": 23,
+      "ignoredFiles": 20
+    },
+    "tests": {
+      "unitTests": [],
+      "integrationTests": [],
+      "securityTests": [],
+      "performanceTests": [],
+      "total": 0
+    },
+    "testResults": null,
+    "fixes": [],
+    "marathonTask": null,
+    "timeline": null,
+    "metrics": null,
+    "files": [
+      {
+        "path": "common.js",
+        "content": "function initCountdown(config) {\n    const { timeLeft: initialTime, countdownSelector, progressBarSelector, countdownBoxSelector, mainContentSelector, videoEffectSelector } = config;\n    \n    let timeLeft = initialTime;\n    const elements = {\n        countdown: document.querySelector(countdownSelector),\n        progressBar: document.querySelector(progressBarSelector),\n        countdownBox: document.querySelector(countdownBoxSelector),\n        mainContent: document.querySelector(mainContentSelector),\n        videoEffect: document.querySelector(videoEffectSelector)\n    };\n    \n    if (elements.mainContent) elements.mainContent.classList.add('d-none');\n    \n    const updateDisplay = () => {\n        const minutes = Math.floor(timeLeft / 60);\n        const seconds = timeLeft % 60;\n        if (elements.countdown) elements.countdown.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;\n        if (elements.progressBar) elements.progressBar.style.width = `${((initialTime - timeLeft) / initialTime * 100)}%`;\n    };\n    \n    const interval = setInterval(() => {\n        timeLeft--;\n        updateDisplay();\n        if (timeLeft <= 0) {\n            clearInterval(interval);\n            if (elements.progressBar) elements.progressBar.style.width = '100%';\n            setTimeout(() => {\n                if (elements.countdownBox) elements.countdownBox.style.display = 'none';\n                if (elements.mainContent) {\n                    elements.mainContent.classList.remove('d-none');\n                    requestAnimationFrame(() => {\n                        requestAnimationFrame(() => {\n                            window.scrollTo({ top: elements.mainContent.offsetTop - 50, behavior: 'smooth' });\n                        });\n                    });\n                }\n            }, 300);\n        }\n    }, 1000);\n    \n    setTimeout(() => elements.videoEffect?.classList.add('show-effect'), 3000);\n}\n\n// Common variables\nconst WHATSAPP_LINK = 'https://wa.me/message/FZGWHQYUN64SD1';\nconst VIDEO_IFRAME_BASE = 'https://fast.wistia.net/embed/iframe/quwuvlspp0?seo=false&videoFoam=true&autoPlay=true&muted=false&videoQuality=hd-1080&playButton=false&playbar=false&controlsVisibleOnLoad=false&fullscreenButton=false&volumeControl=false&smallPlayButton=false&playPauseNotifier=false&clickToPlay=false';\n\nfunction getVideoIframe(videoId, title) {\n    const videoUrl = videoId === 'quwuvlspp0' ? VIDEO_IFRAME_BASE : `https://fast.wistia.net/embed/iframe/${videoId}?seo=false&videoFoam=true&autoPlay=true&muted=false&videoQuality=hd-1080&playButton=false&playbar=false&controlsVisibleOnLoad=false&fullscreenButton=false&volumeControl=false&smallPlayButton=false&playPauseNotifier=false&clickToPlay=false`;\n    return `<iframe src=\"${videoUrl}\" title=\"${title}\" allow=\"autoplay; fullscreen\" allowtransparency=\"true\" frameborder=\"0\" scrolling=\"no\" class=\"wistia_embed\" name=\"wistia_embed\" msallowfullscreen width=\"100%\" height=\"100%\"></iframe>`;\n}\n\nfunction preventVideoPause(videoId) {\n    window._wq = window._wq || [];\n    window._wq.push({\n        id: videoId,\n        onReady: function(video) {\n            video.bind('pause', function() {\n                video.play();\n            });\n        }\n    });\n}\n\nfunction initFormSubmission(config) {\n    const { formId, googleScriptUrl, redirectUrl, formName, getFormData } = config;\n    \n    const form = document.getElementById(formId);\n    if (!form) return;\n    \n    form.addEventListener('submit', (e) => {\n        e.preventDefault();\n        \n        const formData = new FormData(form);\n        const data = new URLSearchParams();\n        data.append('form_name', formName || 'Form');\n        \n        // Add form data first\n        if (getFormData) {\n            const customData = getFormData(formData);\n            for (const [key, value] of Object.entries(customData)) {\n                if (value) data.append(key, value);\n            }\n        }\n        \n        // Add timestamp, device type, and user agent at the end\n        data.append('timestamp', new Date().toLocaleString('en-US'));\n        data.append('device_type', /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? (/iPad/.test(navigator.userAgent) ? 'Tablet' : 'Mobile') : 'Desktop');\n        data.append('user_agent', navigator.userAgent || 'Unknown');\n        \n        if (googleScriptUrl) {\n            fetch(googleScriptUrl, {\n                method: 'POST',\n                mode: 'no-cors',\n                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },\n                body: data.toString()\n            });\n        }\n        \n        form.reset();\n        setTimeout(() => {\n            window.location.href = redirectUrl;\n        }, 200);\n    });\n} ",
+        "language": "javascript"
+      },
+      {
+        "path": "facebook-pixel.js",
+        "content": "function initFacebookPixel(pixelId) {\n    !function(f,b,e,v,n,t,s)\n    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n    n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n    n.queue=[];t=b.createElement(e);t.async=!0;\n    t.src=v;s=b.getElementsByTagName(e)[0];\n    s.parentNode.insertBefore(t,s)}(window, document,'script',\n    'https://connect.facebook.net/en_US/fbevents.js');\n    \n    fbq('init', pixelId);\n    fbq('track', 'PageView');\n}\n \nfunction initFacebookPixelWithPurchase(pixelId) {\n    const urlParams = new URLSearchParams(window.location.search);\n    const finalPixelId = urlParams.get('pixel_id') || pixelId;\n    \n    !function(f,b,e,v,n,t,s)\n    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n    n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n    n.queue=[];t=b.createElement(e);t.async=!0;\n    t.src=v;s=b.getElementsByTagName(e)[0];\n    s.parentNode.insertBefore(t,s)}(window, document,'script',\n    'https://connect.facebook.net/en_US/fbevents.js');\n    \n    fbq('init', finalPixelId);\n    fbq('track', 'PageView');\n    fbq('track', 'Purchase');\n}\n\n",
+        "language": "javascript"
+      },
+      {
+        "path": "header.js",
+        "content": "function createHeader(config) {\n    const { \n        linkText = null, \n        linkHref = '#contactForm',\n        showLink = true \n    } = config || {};\n    \n    if (document.querySelector('.fixed-header')) {\n        return;\n    }\n    \n    const header = document.createElement('header');\n    header.className = 'fixed-header';\n     \n    const container = document.createElement('div');\n    container.className = 'container';\n    \n    const logoContainer = document.createElement('div');\n    logoContainer.style.cssText = 'display: flex; align-items: center; gap: 10px;';\n    \n    const logo = document.createElement('img');\n    logo.src = 'adfix-logo.webp';\n    logo.alt = 'Logo';\n    logo.className = 'fixed-header-logo';\n    logo.fetchPriority = 'high';\n    logo.loading = 'eager';\n    logo.width = 215;\n    logo.height = 70;\n    \n    logoContainer.appendChild(logo);\n    container.appendChild(logoContainer);\n    \n    if (showLink && linkText) {\n        const link = document.createElement('a');\n        link.href = linkHref;\n        link.className = 'fixed-header-link';\n        link.textContent = linkText;\n        container.appendChild(link);\n    }\n    \n    header.appendChild(container);\n    \n    const body = document.body;\n    if (body.firstChild) {\n        body.insertBefore(header, body.firstChild);\n    } else {\n        body.appendChild(header);\n    }\n}\n\ndocument.addEventListener('DOMContentLoaded', function() {\n    if (window.headerConfig) {\n        createHeader(window.headerConfig);\n    }\n});\n\n",
+        "language": "javascript"
+      }
+    ],
+    "issueData": {
+      "common.js-error_handling-high-Potential null pointer exceptions in initCountdown": {
+        "explainFix": {
+          "issue": {
+            "type": "error_handling",
+            "severity": "high",
+            "file": "common.js",
+            "line": 15,
+            "description": "Potential null pointer exceptions in initCountdown. The code accesses properties like .textContent and .style on results of document.querySelector without verifying if the elements exist.",
+            "suggestion": "Add null checks for all properties in the 'elements' object before accessing them, or use optional chaining consistently."
+          },
+          "whyDangerous": "This error_handling issue (high severity) needs attention.",
+          "howToFixManually": "Add null checks for all properties in the 'elements' object before accessing them, or use optional chaining consistently.",
+          "impact": "This issue may affect code quality, security, or functionality.",
+          "priority": "high",
+          "estimatedTime": "Unknown",
+          "difficulty": "medium"
+        }
+      },
+      "facebook-pixel.js-security-medium-Information leakage/Tracking Hijack. The function ": {
+        "explainFix": {
+          "issue": {
+            "type": "security",
+            "severity": "medium",
+            "file": "facebook-pixel.js",
+            "line": 16,
+            "description": "Information leakage/Tracking Hijack. The function initFacebookPixelWithPurchase allows the pixel_id to be overridden via a URL query parameter, allowing an attacker to redirect tracking data to their own pixel.",
+            "suggestion": "Do not allow sensitive configuration like pixel IDs to be set directly via URL parameters without a whitelist."
+          },
+          "whyDangerous": "This security issue (medium severity) needs attention.",
+          "howToFixManually": "Do not allow sensitive configuration like pixel IDs to be set directly via URL parameters without a whitelist.",
+          "impact": "This issue may affect code quality, security, or functionality.",
+          "priority": "medium",
+          "estimatedTime": "Unknown",
+          "difficulty": "medium"
+        }
+      }
+    },
+    "businessImpactData": {
+      "common.js-bug-low-Division by zero risk. If initialTime is passed as": {
+        "issueId": "common.js-bug-low",
+        "impactScore": 25,
+        "priority": "low",
+        "explanation": "This low severity bug issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "facebook-pixel.js-security-medium-Information leakage/Tracking Hijack. The function ": {
+        "issueId": "facebook-pixel.js-security-medium",
+        "impactScore": 50,
+        "priority": "medium",
+        "explanation": "This medium severity security issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "common.js-performance-low-Interval memory leak. The setInterval in initCount": {
+        "issueId": "common.js-performance-low",
+        "impactScore": 25,
+        "priority": "low",
+        "explanation": "This low severity performance issue could impact user experience and system reliability.",
+        "estimatedCost": {},
+        "businessMetrics": {}
+      },
+      "common.js-bug-medium-Race condition in form submission. The window.loca": {
+        "estimatedCost": {
+          "revenue": "Significant loss due to dropped leads; potential 40-60% failure rate on mobile or slow connections.",
+          "users": "High frustration; users receive a 'success' experience (redirect) but never receive follow-up communication.",
+          "time": "High waste for Support and Dev teams investigating 'ghost' submissions that never reached the database.",
+          "reputation": "Damaged brand trust as customers perceive the company as unresponsive to their inquiries."
+        },
+        "businessMetrics": {
+          "conversion": "Artificial inflation of 'Thank You' page views while actual recorded lead data drops by 50% or more.",
+          "seo": "N/A",
+          "security": "Compromised data integrity; critical business information is lost in transit.",
+          "performance": "Misleading performance metrics; the 200ms timeout prioritizes perceived speed over functional correctness."
+        },
+        "impactScore": 85,
+        "priority": "high",
+        "explanation": "This is a critical business failure because it causes silent data loss. From a user's perspective, the form submitted successfully, but the business never receives the data, leading to lost revenue and broken trust that is difficult to debug without monitoring the network layer.",
+        "realWorldExample": "A prospective client fills out a 'Request a Quote' form for a $10,000 contract. On their 4G connection, the request takes 600ms to reach the server. Because the script redirects at 200ms, the browser cancels the request; the client sees the 'Success' page, but the sales team never gets the notification, and the lead is lost to a competitor.",
+        "issueId": "common.js-bug-medium"
+      }
+    }
+  },
+  "config": {
+    "testTypes": [
+      "unit",
+      "integration",
+      "security"
+    ],
+    "duration": "one-time",
+    "autoFix": true
+  }
+}
