@@ -4,7 +4,8 @@ import path from 'path';
 import { createApiResponse, createErrorResponse } from '@/lib/utils/apiHelper';
 import { 
   getSession as getSessionFromCache,
-  deleteSession as deleteSessionFromCache 
+  deleteSession as deleteSessionFromCache,
+  saveSession as saveSessionToCache
 } from '@/lib/services/sessionStorageVercel';
 
 const SESSIONS_DIR = path.join(process.cwd(), 'data', 'sessions');
@@ -17,6 +18,17 @@ export async function GET(
 ) {
   try {
     const { id: sessionId } = await params;
+    
+    // Use in-memory cache for Vercel (serverless)
+    if (!USE_FILE_STORAGE) {
+      const session = await getSessionFromCache(sessionId);
+      if (!session) {
+        return createErrorResponse('Session not found', 404);
+      }
+      return createApiResponse(true, { session });
+    }
+    
+    // Use file storage for local development
     const fileName = `${sessionId}.json`;
     const filePath = path.join(SESSIONS_DIR, fileName);
     
@@ -43,6 +55,14 @@ export async function DELETE(
 ) {
   try {
     const { id: sessionId } = await params;
+    
+    // Use in-memory cache for Vercel (serverless)
+    if (!USE_FILE_STORAGE) {
+      await deleteSessionFromCache(sessionId);
+      return createApiResponse(true, { message: 'Session deleted successfully' });
+    }
+    
+    // Use file storage for local development
     const fileName = `${sessionId}.json`;
     const filePath = path.join(SESSIONS_DIR, fileName);
     
@@ -61,12 +81,54 @@ export async function DELETE(
   }
 }
 
-// PATCH: Update session data (for issueData)
+// PATCH: Update session data (for issueData, timeline, metrics, businessImpactData)
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const filePath = path.join(SESSIONS_DIR, `${id}.json`);
     const body = await request.json();
+
+    // Use in-memory cache for Vercel (serverless)
+    if (!USE_FILE_STORAGE) {
+      const session = await getSessionFromCache(id);
+      if (!session) {
+        return createErrorResponse('Session not found', 404);
+      }
+
+      // Update session with new data
+      if (body.issueData !== undefined) {
+        if (!session.results.issueData) {
+          session.results.issueData = {};
+        }
+        session.results.issueData = { ...session.results.issueData, ...body.issueData };
+      }
+      
+      if (body.results?.timeline !== undefined) {
+        session.results.timeline = body.results.timeline;
+      }
+      
+      if (body.results?.metrics !== undefined) {
+        session.results.metrics = body.results.metrics;
+      }
+
+      if (body.businessImpactData !== undefined) {
+        if (!session.results.businessImpactData) {
+          session.results.businessImpactData = {};
+        }
+        session.results.businessImpactData = { ...session.results.businessImpactData, ...body.businessImpactData };
+      }
+      
+      if (body.results && Object.keys(body.results).length > 0) {
+        session.results = { ...session.results, ...body.results };
+      }
+
+      // Update in cache (re-save with same id)
+      await saveSessionToCache(session);
+      
+      return createApiResponse(true, { session });
+    }
+
+    // Use file storage for local development
+    const filePath = path.join(SESSIONS_DIR, `${id}.json`);
 
     try {
       // Read existing session
@@ -90,7 +152,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (body.results?.metrics !== undefined) {
         session.results.metrics = body.results.metrics;
       }
-      
+
       // Update businessImpactData if provided
       if (body.businessImpactData !== undefined) {
         if (!session.results.businessImpactData) {
