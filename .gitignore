@@ -36,5 +36,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# sessions data
-/data/sessions
+# sessions data (keep .gitkeep and JSON files)
+/data/sessions/*
+!data/sessions/.gitkeep
+!data/sessions/*.json
