@@ -86,7 +86,7 @@ export default function HomePage() {
     };
   }, [currentSentenceIndex]);
   const {
-    repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId,
+    repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId, currentSessionId,
     setRepoUrl, setFiles, handleTestTypeChange, setDuration, setAutoFix, handleStartTesting,
     setMarathonTaskId, setErrorCallback, regenerateTimeline, regenerateMetrics, loadSession
   } = useCodeTesting();
@@ -353,6 +353,7 @@ export default function HomePage() {
               <ResultsView
                 results={results}
                 marathonTaskId={marathonTaskId}
+                sessionId={currentSessionId}
                 onError={(message, type) => setError({ message, type })}
                 onStopMarathon={handleStopMarathon}
                 onRegenerateTimeline={regenerateTimeline}

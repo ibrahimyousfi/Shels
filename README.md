@@ -1,25 +1,38 @@
 # 🐚 Shels - Autonomous Code Testing Agent
 
-> **Autonomous code testing and analysis agent powered by Google Gemini 3 AI. Automate testing, find bugs, and fix code automatically.**
+> **The AI Engineer that thinks like a CTO. Autonomous code testing and analysis powered by Google Gemini 3 AI. Understands business impact, not just code quality.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
 
-Shels is an intelligent autonomous testing agent that leverages Google Gemini 3's advanced AI capabilities to analyze codebases, generate comprehensive tests, detect issues, and automatically fix problems. Built for the **Gemini 3 Hackathon** with a focus on the **Marathon Agent** strategic track.
+Shels is an **autonomous engineering agent** that doesn't just find bugs—it understands their business impact. Powered by Google Gemini 3's advanced AI, Shels analyzes codebases, generates comprehensive tests, detects issues, and automatically fixes problems while explaining the real-world consequences of each issue.
+
+**Unlike traditional code analysis tools**, Shels thinks like a CTO: it connects technical issues to business metrics, prioritizes fixes by ROI, and explains impact in terms of revenue, users, and reputation.
+
+Built for the **Gemini 3 Hackathon** with a focus on the **Marathon Agent** strategic track.
 
 ## ✨ Features
 
+### Core Capabilities
 - 🔍 **Comprehensive Code Analysis** - Analyze entire codebases using Extended Context (1M tokens)
 - 🧪 **Intelligent Test Generation** - Automatically generate unit, integration, security, and performance tests
 - 🐛 **Advanced Issue Detection** - Find bugs, security vulnerabilities, performance issues, and code quality problems
 - 🔧 **AI-Powered Auto-Fix** - Automatic code fixes with context-aware suggestions
 - ⚡ **Marathon Agent** - Long-running autonomous tasks with continuous monitoring (24/7)
-- 🔗 **GitHub Integration** - Connect directly to GitHub repositories for seamless workflow
-- 📊 **Risk Timeline** - Visualize potential risks and their evolution over time
-- 📈 **Code Metrics** - Track code quality, complexity, and maintainability metrics
+
+### Unique Differentiators
+- 💼 **Business Impact Analysis** - Understand the real-world cost of each issue (revenue, users, reputation)
+- 📊 **Impact Score (0-100)** - Prioritize fixes by business impact, not just technical severity
+- 🎯 **ROI-Based Prioritization** - Fix what matters most to your business first
+- 📈 **Risk Timeline** - Visualize potential risks and their evolution over time
 - 🧠 **Reasoning Chains** - Understand AI decision-making process with detailed reasoning
+- 💡 **Real-World Examples** - See concrete scenarios of how issues affect your business
+
+### Additional Features
+- 🔗 **GitHub Integration** - Connect directly to GitHub repositories for seamless workflow
+- 📈 **Code Metrics** - Track code quality, complexity, and maintainability metrics
 - 💾 **Session Management** - Save and restore analysis sessions
 
 ## 🚀 Technologies
@@ -194,12 +207,33 @@ Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/ap
 
 This project is submitted for the **Google Gemini 3 Hackathon** and implements the **Marathon Agent** strategic track.
 
+### Why Shels Stands Out:
+
+**🎯 Business-First Approach**
+- Unlike traditional tools that show "Security issue found", Shels explains: *"This XSS vulnerability could cost you 30% of leads and expose 10,000+ user accounts"*
+- Prioritizes fixes by business impact, not just technical severity
+- Connects code quality to revenue, conversion, and user experience
+
+**🤖 True Autonomous Agent**
+- Marathon Agent runs 24/7 without human supervision
+- Self-corrects and improves testing strategy based on results
+- Maintains continuity across multi-step tool calls using Thought Signatures
+- Detects changes and retests automatically
+
+**🧠 Advanced Reasoning**
+- Uses Gemini 3's Extended Context (1M tokens) to understand entire codebases
+- Generates intelligent, context-aware tests tailored to your specific codebase
+- Explains *why* issues are dangerous, not just *what* they are
+- Provides reasoning chains for transparency and trust
+
 ### Key Highlights:
 - ✅ Uses Gemini 3 Extended Context (1M tokens)
 - ✅ Implements Marathon Agent for long-running tasks
 - ✅ Advanced Reasoning for complex code analysis
 - ✅ Self-correction capabilities
 - ✅ Thought Signatures for continuity
+- ✅ **Business Impact Analysis** (Unique differentiator)
+- ✅ **ROI-Based Prioritization** (Unique differentiator)
 
 ## 📝 License
 

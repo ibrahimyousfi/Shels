@@ -13,6 +13,7 @@ export function useCodeTesting() {
   const [results, setResults] = useState<any>(null);
   const [progress, setProgress] = useState({ step: '', percentage: 0 });
   const [marathonTaskId, setMarathonTaskId] = useState<string | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const handleTestTypeChange = (type: 'unit' | 'integration' | 'security' | 'performance') => {
     setTestTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
@@ -54,7 +55,7 @@ export function useCodeTesting() {
       
       const marathonTask = await startMarathonIfNeeded(analyzeData);
 
-      const finalResults = {
+      const finalResults: any = {
         analysis: analyzeData.analysis,
         tests: testData.tests,
         testResults,
@@ -62,7 +63,8 @@ export function useCodeTesting() {
         marathonTask,
         timeline: timelineResult,
         metrics: metricsResult,
-        files: analyzeData.files || []
+        files: analyzeData.files || [],
+        issueData: {}
       };
 
       setResults(finalResults);
@@ -73,7 +75,7 @@ export function useCodeTesting() {
           ? `Analysis: ${repoUrl.split('/').pop() || 'Repository'}`
           : `Analysis: ${files.length} files`;
         
-        await saveSession({
+        const savedSession = await saveSession({
           name: sessionName,
           repoUrl: repoUrl || undefined,
           results: finalResults,
@@ -83,6 +85,8 @@ export function useCodeTesting() {
             autoFix
           }
         });
+        
+        setCurrentSessionId(savedSession.id);
       } catch (error) {
         console.error('Failed to save session:', error);
       }
@@ -299,6 +303,22 @@ export function useCodeTesting() {
       
       if (timeline) {
         setResults((prev: any) => ({ ...prev, timeline }));
+        
+        // Save to session
+        if (currentSessionId) {
+          try {
+            await fetch(`/api/sessions/${currentSessionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                results: { ...results, timeline }
+              })
+            });
+          } catch (error) {
+            console.error('Failed to save timeline to session:', error);
+          }
+        }
+        
         errorCallback?.({ message: 'Risk Timeline regenerated successfully', type: 'info' });
       }
     } catch (error: any) {
@@ -320,6 +340,22 @@ export function useCodeTesting() {
       
       if (metrics) {
         setResults((prev: any) => ({ ...prev, metrics }));
+        
+        // Save to session
+        if (currentSessionId) {
+          try {
+            await fetch(`/api/sessions/${currentSessionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                results: { ...results, metrics }
+              })
+            });
+          } catch (error) {
+            console.error('Failed to save metrics to session:', error);
+          }
+        }
+        
         errorCallback?.({ message: 'Code Metrics regenerated successfully', type: 'info' });
       }
     } catch (error: any) {
@@ -329,6 +365,7 @@ export function useCodeTesting() {
 
   const loadSession = (session: any) => {
     setResults(session.results);
+    setCurrentSessionId(session.id);
     setRepoUrl(session.repoUrl || '');
     setTestTypes(session.config.testTypes || ['unit', 'integration', 'security']);
     setDuration(session.config.duration || 'one-time');
@@ -337,7 +374,7 @@ export function useCodeTesting() {
   };
 
   return {
-    repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId,
+    repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId, currentSessionId,
     setRepoUrl, setFiles, handleTestTypeChange, setDuration, setAutoFix, handleStartTesting,
     setMarathonTaskId, setErrorCallback, regenerateTimeline, regenerateMetrics, loadSession
   };
