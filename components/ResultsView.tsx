@@ -11,16 +11,7 @@ import FixesSection from './ResultsView/FixesSection';
 import MarathonSection from './ResultsView/MarathonSection';
 import SuccessMetricsSection from './ResultsView/SuccessMetricsSection';
 import ViewTabs from './ResultsView/ViewTabs';
-
-interface ResultsViewProps {
-  results: any;
-  marathonTaskId?: string | null;
-  sessionId?: string | null;
-  onStopMarathon?: () => void;
-  onError?: (message: string, type?: 'error' | 'warning' | 'info') => void;
-  onRegenerateTimeline?: () => Promise<void>;
-  onRegenerateMetrics?: () => Promise<void>;
-}
+import type { ResultsViewProps } from '@/lib/types';
 
 export default function ResultsView({ results, marathonTaskId, sessionId, onStopMarathon, onError, onRegenerateTimeline, onRegenerateMetrics }: ResultsViewProps) {
   const [selectedView, setSelectedView] = useState<'results' | 'risk-timeline' | 'metrics' | 'business-impact'>('results');

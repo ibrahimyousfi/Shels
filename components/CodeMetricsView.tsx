@@ -1,11 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-interface CodeMetricsViewProps {
-  results: any;
-  onRegenerate?: () => Promise<void>;
-}
+import type { CodeMetricsViewProps, CodeMetrics } from '@/lib/types';
 
 export default function CodeMetricsView({ results, onRegenerate }: CodeMetricsViewProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -64,12 +60,7 @@ export default function CodeMetricsView({ results, onRegenerate }: CodeMetricsVi
     <div className="mt-4">
       <h3 className="text-xl font-semibold mb-4 text-white">Code Metrics</h3>
       
-      {metrics.overall !== undefined && <OverallScore score={metrics.overall} />}
       <IndividualMetrics metrics={metrics} />
-      {metrics.recommendations?.length > 0 && (
-        <RecommendationsSection recommendations={metrics.recommendations} />
-      )}
-      {metrics.trends && <TrendsSection trends={metrics.trends} />}
     </div>
   );
 }
@@ -94,13 +85,11 @@ function OverallScore({ score }: { score: number }) {
   );
 }
 
-function IndividualMetrics({ metrics }: { metrics: any }) {
+function IndividualMetrics({ metrics }: { metrics: CodeMetrics }) {
   const metricItems = [
-    { label: 'Maintainability', value: metrics.maintainability, color: 'blue' },
-    { label: 'Security', value: metrics.security, color: 'red' },
-    { label: 'Testability', value: metrics.testability, color: 'green' },
-    { label: 'Performance', value: metrics.performance, color: 'purple' },
-    { label: 'Complexity', value: metrics.complexity, color: 'orange' }
+    { label: 'Maintainability', value: metrics.maintainability.score, color: 'blue' },
+    { label: 'Testability', value: metrics.testability.score, color: 'green' },
+    { label: 'Complexity (Avg)', value: metrics.complexity.average, color: 'orange' }
   ].filter(item => item.value !== undefined);
 
   if (metricItems.length === 0) return null;

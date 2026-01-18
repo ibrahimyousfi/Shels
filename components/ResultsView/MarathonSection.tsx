@@ -1,13 +1,17 @@
 'use client';
 
+import type { SessionResults } from '@/lib/types';
+
 interface MarathonSectionProps {
-  results: any;
+  results: SessionResults;
   marathonTaskId: string | null;
   onStop: () => void;
 }
 
 export default function MarathonSection({ results, marathonTaskId, onStop }: MarathonSectionProps) {
   const task = results.marathonTask;
+  if (!task) return null;
+  
   const runtime = task.startTime ? Math.floor((Date.now() - new Date(task.startTime).getTime()) / 1000 / 60) : 0;
   
   return (

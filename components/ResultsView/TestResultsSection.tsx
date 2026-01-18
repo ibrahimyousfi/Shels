@@ -1,7 +1,9 @@
 'use client';
 
+import type { SessionResults } from '@/lib/types';
+
 interface TestResultsSectionProps {
-  results: any;
+  results: SessionResults;
 }
 
 export default function TestResultsSection({ results }: TestResultsSectionProps) {
@@ -12,7 +14,7 @@ export default function TestResultsSection({ results }: TestResultsSectionProps)
       <p className="text-white">Unit Tests: {results.tests.unitTests.length}</p>
       <p className="text-white">Integration Tests: {results.tests.integrationTests.length}</p>
       <p className="text-white">Security Tests: {results.tests.securityTests.length}</p>
-      {results.tests.performanceTests?.length > 0 && (
+      {results.tests.performanceTests && results.tests.performanceTests.length > 0 && (
         <p className="text-white">Performance Tests: {results.tests.performanceTests.length}</p>
       )}
       

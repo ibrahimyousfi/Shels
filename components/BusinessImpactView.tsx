@@ -1,31 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-interface BusinessImpactViewProps {
-  results: any;
-  sessionId?: string;
-  onError?: (message: string, type?: 'error' | 'warning' | 'info') => void;
-}
-
-interface BusinessImpactData {
-  impactScore: number;
-  priority: string;
-  explanation: string;
-  estimatedCost?: {
-    revenue?: string;
-    users?: string;
-    time?: string;
-    reputation?: string;
-  };
-  businessMetrics?: {
-    conversion?: string;
-    seo?: string;
-    security?: string;
-    performance?: string;
-  };
-  realWorldExample?: string;
-}
+import type { BusinessImpactViewProps, BusinessImpactData, CodeIssue } from '@/lib/types';
 
 export default function BusinessImpactView({ results, sessionId, onError }: BusinessImpactViewProps) {
   const [businessImpacts, setBusinessImpacts] = useState<Map<string, BusinessImpactData>>(new Map());
@@ -46,13 +22,13 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
 
     // Load from session if available
     if (results.businessImpactData) {
-      Object.entries(results.businessImpactData).forEach(([key, value]: [string, any]) => {
+      Object.entries(results.businessImpactData).forEach(([key, value]: [string, BusinessImpactData]) => {
         impacts.set(key, value);
       });
     }
 
     // Load missing impacts from API
-    const missingIssues = results.analysis.issues.filter((issue: any) => {
+    const missingIssues = results.analysis.issues.filter((issue: CodeIssue) => {
       const key = getIssueKey(issue);
       return !impacts.has(key);
     });
@@ -109,7 +85,7 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
     setLoading(false);
   };
 
-  const getIssueKey = (issue: any) => {
+  const getIssueKey = (issue: CodeIssue): string => {
     return `${issue.file}-${issue.type}-${issue.severity}-${issue.description.substring(0, 50)}`;
   };
 
@@ -146,7 +122,7 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
   const issues = results.analysis.issues || [];
   const impactsArray = Array.from(businessImpacts.entries())
     .map(([key, impact]) => {
-      const issue = issues.find((i: any) => getIssueKey(i) === key);
+      const issue = issues.find((i: CodeIssue) => getIssueKey(i) === key);
       return { issue, impact, key };
     })
     .filter(item => item.issue && item.impact)
@@ -213,6 +189,8 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
         <div className="space-y-3">
           {impactsArray.map((item, index) => {
             const { issue, impact } = item;
+            if (!issue) return null;
+            
             const impactScore = impact.impactScore || 0;
             const getImpactColor = (score: number) => {
               if (score >= 75) return 'text-red-400';

@@ -1,7 +1,9 @@
 'use client';
 
+import type { ExplainFixData } from '@/lib/types';
+
 interface ExplainFixSectionProps {
-  explainFix: any;
+  explainFix?: ExplainFixData;
   isExpanded: boolean;
   onClose?: () => void;
 }

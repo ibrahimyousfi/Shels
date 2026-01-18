@@ -1,19 +1,9 @@
 'use client';
 
+import type { BusinessImpactData } from '@/lib/types';
+
 interface BusinessImpactSectionProps {
-  businessImpact?: {
-    impactScore?: number;
-    priority?: string;
-    explanation?: string;
-    estimatedCost?: {
-      revenue?: string;
-      users?: string;
-      time?: string;
-      reputation?: string;
-    };
-    businessMetrics?: any;
-    realWorldExample?: string;
-  };
+  businessImpact?: BusinessImpactData;
 }
 
 export default function BusinessImpactSection({ businessImpact }: BusinessImpactSectionProps) {

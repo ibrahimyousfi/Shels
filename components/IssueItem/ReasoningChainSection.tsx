@@ -1,7 +1,9 @@
 'use client';
 
+import type { ReasoningChainData, ReasoningStep } from '@/lib/types';
+
 interface ReasoningChainSectionProps {
-  reasoningChain: any;
+  reasoningChain?: ReasoningChainData;
   isExpanded: boolean;
   onClose?: () => void;
 }

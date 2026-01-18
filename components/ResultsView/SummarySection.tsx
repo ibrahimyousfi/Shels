@@ -1,7 +1,9 @@
 'use client';
 
+import type { SessionResults } from '@/lib/types';
+
 interface SummarySectionProps {
-  results: any;
+  results: SessionResults;
 }
 
 export default function SummarySection({ results }: SummarySectionProps) {

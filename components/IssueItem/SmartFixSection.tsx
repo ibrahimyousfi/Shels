@@ -1,7 +1,9 @@
 'use client';
 
+import type { SmartFixData } from '@/lib/types';
+
 interface SmartFixSectionProps {
-  smartFix: any;
+  smartFix?: SmartFixData;
   isExpanded: boolean;
   onClose?: () => void;
 }

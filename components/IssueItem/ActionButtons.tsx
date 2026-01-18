@@ -1,12 +1,10 @@
 'use client';
 
+import type { IssueData } from '@/lib/types';
+
 interface ActionButtonsProps {
   loading: 'explain' | 'smart' | 'reasoning' | null;
-  cachedData: {
-    explainFix?: any;
-    smartFix?: any;
-    reasoningChain?: any;
-  };
+  cachedData: IssueData;
   onExplainFix: () => void;
   onSmartFix: () => void;
   onReasoningChain: () => void;

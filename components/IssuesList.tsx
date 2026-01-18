@@ -2,14 +2,15 @@
 
 import { useEffect } from 'react';
 import IssueItem from './IssueItem';
+import type { SessionResults, CodeIssue, IssueData, ExplainFixData, SmartFixData, ReasoningChainData } from '@/lib/types';
 
 interface IssuesListProps {
-  results: any;
+  results: SessionResults;
   sessionId?: string;
   onError?: (message: string, type?: 'error' | 'warning' | 'info') => void;
 }
 
-function parseErrorMessage(message: any): string {
+function parseErrorMessage(message: unknown): string {
   if (!message) return 'Unknown error occurred';
   
   try {
@@ -52,11 +53,11 @@ async function handleApiCall(
       onError?.(`Request failed: ${errorMsg}`, isQuotaError(errorMsg) ? 'warning' : 'error');
       return errorMsg;
     }
-  } catch (error: any) {
-    const errorMsg = parseErrorMessage(error.message);
-    onError?.(`Error: ${errorMsg}`, isQuotaError(errorMsg) ? 'warning' : 'error');
-    return errorMsg;
-  }
+    } catch (error: unknown) {
+      const errorMsg = parseErrorMessage(error instanceof Error ? error.message : String(error));
+      onError?.(`Error: ${errorMsg}`, isQuotaError(errorMsg) ? 'warning' : 'error');
+      return errorMsg;
+    }
 }
 
 export default function IssuesList({ results, sessionId, onError }: IssuesListProps) {
@@ -79,11 +80,11 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     return files;
   };
 
-  const getIssueKey = (issue: any) => {
+  const getIssueKey = (issue: CodeIssue): string => {
     return `${issue.file}-${issue.type}-${issue.severity}-${issue.description.substring(0, 50)}`;
   };
 
-  const saveIssueDataToSession = async (issueKey: string, data: any) => {
+  const saveIssueDataToSession = async (issueKey: string, data: Partial<IssueData>): Promise<void> => {
     if (!sessionId) return;
     
     try {
@@ -104,12 +105,13 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issueData: updatedIssueData })
       });
-    } catch (error) {
-      console.error('Failed to save issue data to session:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save issue data to session';
+      onError?.(errorMessage, 'error');
     }
   };
 
-  const handleExplainFix = async (issue: any): Promise<any> => {
+  const handleExplainFix = async (issue: CodeIssue): Promise<ExplainFixData | null> => {
     const issueKey = getIssueKey(issue);
     
     // Check if already in session
@@ -124,8 +126,8 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
       const errorMsg = await handleApiCall(
         '/api/explain-fix',
         { issues: [issue], files },
-        async (data) => {
-          if (data.explanations?.length > 0) {
+        async (data: { explanations?: ExplainFixData[] }) => {
+          if (data.explanations && data.explanations.length > 0) {
             const explanation = data.explanations[0];
             await saveIssueDataToSession(issueKey, { explainFix: explanation });
             resolve(explanation);
@@ -143,7 +145,7 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     });
   };
 
-  const handleSmartFix = async (issue: any): Promise<any> => {
+  const handleSmartFix = async (issue: CodeIssue): Promise<SmartFixData | null> => {
     const issueKey = getIssueKey(issue);
     
     // Check if already in session
@@ -166,9 +168,9 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
         {
           issue,
           fileContent,
-          codebaseContext: files.map((f: any) => f.content).join('\n\n')
+          codebaseContext: files.map((f) => f.content).join('\n\n')
         },
-        async (data) => {
+        async (data: SmartFixData) => {
           await saveIssueDataToSession(issueKey, { smartFix: data });
           resolve(data);
         },
@@ -182,7 +184,7 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     });
   };
 
-  const handleReasoningChain = async (issue: any): Promise<any> => {
+  const handleReasoningChain = async (issue: CodeIssue): Promise<ReasoningChainData | null> => {
     const issueKey = getIssueKey(issue);
     
     // Check if already in session
@@ -200,9 +202,9 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
         {
           issue,
           fileContent,
-          codebaseContext: files.map((f: any) => f.content).join('\n\n')
+          codebaseContext: files.map((f) => f.content).join('\n\n')
         },
-        async (data) => {
+        async (data: { chain?: ReasoningChainData }) => {
           if (data.chain) {
             await saveIssueDataToSession(issueKey, { reasoningChain: data.chain });
             resolve(data.chain);
@@ -224,7 +226,7 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     <div className="mt-4">
       <h3 className="text-xl font-semibold mb-2 text-white">Issues</h3>
       <div className="space-y-2">
-        {results.analysis.issues.map((issue: any, index: number) => {
+        {results.analysis.issues.map((issue: CodeIssue, index: number) => {
           const issueKey = getIssueKey(issue);
           const cached = issueData[issueKey] || {};
           

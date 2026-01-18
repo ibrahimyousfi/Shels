@@ -7,33 +7,11 @@ import SmartFixSection from './IssueItem/SmartFixSection';
 import ReasoningChainSection from './IssueItem/ReasoningChainSection';
 import ActionButtons from './IssueItem/ActionButtons';
 import IssueHeader from './IssueItem/IssueHeader';
-
-interface IssueItemProps {
-  issue: any;
-  cachedData?: {
-    explainFix?: any;
-    smartFix?: any;
-    reasoningChain?: any;
-    businessImpact?: any;
-  };
-  sessionId?: string;
-  onExplainFix: () => Promise<any>;
-  onSmartFix: () => Promise<any>;
-  onReasoningChain: () => Promise<any>;
-}
-
-interface BusinessImpact {
-  impactScore?: number;
-  priority?: string;
-  explanation?: string;
-  estimatedCost?: any;
-  businessMetrics?: any;
-  realWorldExample?: string;
-}
+import type { IssueItemProps, BusinessImpactData } from '@/lib/types';
 
 export default function IssueItem({ issue, cachedData = {}, sessionId, onExplainFix, onSmartFix, onReasoningChain }: IssueItemProps) {
   const [loading, setLoading] = useState<'explain' | 'smart' | 'reasoning' | null>(null);
-  const [businessImpact, setBusinessImpact] = useState<BusinessImpact | null>(null);
+  const [businessImpact, setBusinessImpact] = useState<BusinessImpactData | null>(null);
   const [loadingImpact, setLoadingImpact] = useState(false);
   const [expandedSections, setExpandedSections] = useState<{
     explain: boolean;
@@ -93,7 +71,7 @@ export default function IssueItem({ issue, cachedData = {}, sessionId, onExplain
     }
   };
 
-  const saveBusinessImpactToSession = async (impact: BusinessImpact) => {
+  const saveBusinessImpactToSession = async (impact: BusinessImpactData): Promise<void> => {
     if (!sessionId) return;
     
     try {

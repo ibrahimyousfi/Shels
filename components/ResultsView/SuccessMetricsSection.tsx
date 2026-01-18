@@ -1,13 +1,15 @@
 'use client';
 
+import type { SessionResults, CodeIssue } from '@/lib/types';
+
 interface SuccessMetricsSectionProps {
-  results: any;
+  results: SessionResults;
 }
 
 export default function SuccessMetricsSection({ results }: SuccessMetricsSectionProps) {
   const issues = results.analysis?.issues || [];
-  const highSeverity = issues.filter((i: any) => i.severity === 'high').length;
-  const securityIssues = issues.filter((i: any) => i.type === 'security').length;
+  const highSeverity = issues.filter((i: CodeIssue) => i.severity === 'high').length;
+  const securityIssues = issues.filter((i: CodeIssue) => i.type === 'security').length;
   const testCoverage = results.testResults?.coverage?.statements || 0;
   const fixesGenerated = results.fixes?.length || 0;
   

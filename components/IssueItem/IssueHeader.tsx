@@ -1,10 +1,10 @@
 'use client';
 
+import type { CodeIssue, BusinessImpactData } from '@/lib/types';
+
 interface IssueHeaderProps {
-  issue: any;
-  businessImpact?: {
-    impactScore?: number;
-  };
+  issue: CodeIssue;
+  businessImpact?: BusinessImpactData;
 }
 
 export default function IssueHeader({ issue, businessImpact }: IssueHeaderProps) {

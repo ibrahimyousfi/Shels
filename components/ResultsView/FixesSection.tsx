@@ -1,7 +1,9 @@
 'use client';
 
+import type { SessionResults } from '@/lib/types';
+
 interface FixesSectionProps {
-  results: any;
+  results: SessionResults;
 }
 
 export default function FixesSection({ results }: FixesSectionProps) {
