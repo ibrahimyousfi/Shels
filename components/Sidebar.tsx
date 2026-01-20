@@ -18,6 +18,7 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, onCreateNewSe
   const [isHovering, setIsHovering] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeMarathonTasks, setActiveMarathonTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadSessions();
@@ -30,9 +31,30 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, onCreateNewSe
     try {
       const allSessions = await getSessions();
       setSessions(allSessions);
+      // Check marathon tasks after loading sessions
+      checkMarathonTasksForSessions(allSessions);
     } catch (error) {
       console.error('Failed to load sessions:', error);
     }
+  };
+
+  const checkMarathonTasksForSessions = async (sessionsToCheck: Session[]) => {
+    const activeTasks = new Set<string>();
+    for (const session of sessionsToCheck) {
+      const marathonTaskId = session.config?.marathonTaskId;
+      if (marathonTaskId && session.config?.duration === 'continuous') {
+        try {
+          const response = await fetch(`/api/marathon?taskId=${marathonTaskId}`);
+          const data = await response.json();
+          if (data.success && data.status?.status === 'running') {
+            activeTasks.add(session.id);
+          }
+        } catch (error) {
+          // Task not found or error, skip
+        }
+      }
+    }
+    setActiveMarathonTasks(activeTasks);
   };
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
@@ -180,7 +202,11 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, onCreateNewSe
                 </div>
               </div>
             ) : (
-              filteredSessions.map((session) => (
+              filteredSessions.map((session) => {
+                const isMonitoring = activeMarathonTasks.has(session.id) || 
+                  (session.config?.duration === 'continuous' && session.config?.marathonTaskId);
+                
+                return (
                 <div
                   key={session.id}
                   onClick={() => handleLoadSession(session)}
@@ -190,7 +216,15 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, onCreateNewSe
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{session.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white truncate">{session.name}</p>
+                        {isMonitoring && (
+                          <div className="relative flex-shrink-0">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 mt-1">{formatDate(session.timestamp)}</p>
                       {session.repoUrl && (
                         <p className="text-xs text-gray-600 mt-1 truncate">{session.repoUrl}</p>
@@ -207,7 +241,8 @@ export default function Sidebar({ isOpen, onToggle, onLoadSession, onCreateNewSe
                     </button>
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         )}

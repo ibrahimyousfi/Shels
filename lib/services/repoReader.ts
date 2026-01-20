@@ -1,4 +1,5 @@
 import { CodeFile } from './codeAnalyzer';
+import { logError, logWarn } from '@/lib/utils/logger';
 
 /**
  * Read files from uploaded files (FormData)
@@ -40,7 +41,7 @@ export async function countAllFilesFromGitHub(repoUrl: string): Promise<number> 
     await countFilesRecursive(baseUrl, owner, repo, count);
     return count.value;
   } catch (error) {
-    console.error('Error counting files from GitHub:', error);
+    logError('Error counting files from GitHub', error);
     return 0;
   }
 }
@@ -52,7 +53,18 @@ async function countFilesRecursive(
   count: { value: number }
 ): Promise<void> {
   try {
-    const response = await fetch(url);
+    // Add GitHub token if available
+    const githubToken = process.env.GITHUB_TOKEN;
+    const headers: HeadersInit = {
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': 'Shels-Code-Analyzer'
+    };
+    
+    if (githubToken) {
+      headers['Authorization'] = `token ${githubToken}`;
+    }
+    
+    const response = await fetch(url, { headers });
     if (!response.ok) return;
     
     const items = await response.json();
@@ -67,7 +79,7 @@ async function countFilesRecursive(
       }
     }
   } catch (error) {
-    console.error(`Error counting files in ${url}:`, error);
+    logError(`Error counting files in ${url}`, error);
   }
 }
 
@@ -77,9 +89,10 @@ async function countFilesRecursive(
 export async function readFilesFromGitHub(repoUrl: string): Promise<CodeFile[]> {
   try {
     // Extract owner and repo from URL
-    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    // Support formats: https://github.com/owner/repo or github.com/owner/repo
+    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git|\/|$)/);
     if (!match) {
-      throw new Error('Invalid GitHub URL');
+      throw new Error('Invalid GitHub URL format. Expected: https://github.com/owner/repo');
     }
 
     const [, owner, repo] = match;
@@ -90,9 +103,23 @@ export async function readFilesFromGitHub(repoUrl: string): Promise<CodeFile[]> 
     // Read files recursively starting from root
     const files = await readDirectoryRecursive(baseUrl, owner, repo);
     
+    if (files.length === 0) {
+      throw new Error('No code files found. Repository may be empty, private, or rate limited. Add GITHUB_TOKEN to fix rate limits.');
+    }
+    
     return files;
-  } catch (error) {
-    console.error('Error reading from GitHub:', error);
+  } catch (error: any) {
+    logError('Error reading from GitHub', error);
+    
+    // Provide more helpful error messages
+    if (error.message?.includes('403') || error.message?.includes('rate limit')) {
+      throw new Error('GitHub API rate limit exceeded. Please add GITHUB_TOKEN to your .env.local file for higher limits (5000/hour). Get token from: https://github.com/settings/tokens');
+    }
+    
+    if (error.message?.includes('404')) {
+      throw new Error('Repository not found. Make sure the repository is public and the URL is correct.');
+    }
+    
     throw error;
   }
 }
@@ -109,39 +136,45 @@ async function readDirectoryRecursive(
   const files: CodeFile[] = [];
   
   try {
-    const response = await fetch(url);
+    const githubToken = process.env.GITHUB_TOKEN;
+    const headers: HeadersInit = {
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': 'Shels-Code-Analyzer'
+    };
+    
+    if (githubToken) {
+      headers['Authorization'] = `token ${githubToken}`;
+    }
+    
+    const response = await fetch(url, { headers });
     if (!response.ok) {
-      // If rate limited or not found, return empty array
-      if (response.status === 403 || response.status === 404) {
-        console.warn(`GitHub API error: ${response.statusText}. Rate limit may be exceeded.`);
+      if (response.status === 403) {
+        logError('GitHub API rate limit', new Error('403 Forbidden'), { url, owner, repo });
+        throw new Error('GitHub API rate limit exceeded. Add GITHUB_TOKEN to .env.local');
+      }
+      if (response.status === 404) {
+        logWarn('GitHub API 404', { url, owner, repo });
         return [];
       }
-      throw new Error(`GitHub API error: ${response.statusText}`);
+      logError('GitHub API error', new Error(`Status ${response.status}`), { url, owner, repo });
+      return [];
     }
 
     const items = await response.json();
-    
-    // Handle both single file and array of items
     const itemsArray = Array.isArray(items) ? items : [items];
-    
-    // Filter only code files
     const codeExtensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.cpp', '.c', '.cs', '.go', '.rs', '.php', '.rb', '.swift', '.kt', '.vue', '.svelte'];
     
     for (const item of itemsArray) {
-      // Skip if it's a directory marker or not a code file
       if (item.type === 'dir') {
-        // Recursively read subdirectory
         const subUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${item.path}`;
         const subFiles = await readDirectoryRecursive(subUrl, owner, repo, item.path);
         files.push(...subFiles);
       } else if (item.type === 'file' && codeExtensions.some(ext => item.name.endsWith(ext))) {
         try {
-          // Use download_url for direct file content (faster)
           if (item.download_url) {
             const fileResponse = await fetch(item.download_url);
             if (fileResponse.ok) {
               const content = await fileResponse.text();
-              
               files.push({
                 path: item.path,
                 content,
@@ -149,9 +182,7 @@ async function readDirectoryRecursive(
               });
             }
           } else if (item.content) {
-            // Fallback: decode base64 content
             const content = Buffer.from(item.content, 'base64').toString('utf-8');
-            
             files.push({
               path: item.path,
               content,
@@ -159,12 +190,12 @@ async function readDirectoryRecursive(
             });
           }
         } catch (error) {
-          console.error(`Error reading file ${item.path}:`, error);
+          // Skip file if error
         }
       }
     }
   } catch (error) {
-    console.error(`Error reading directory ${url}:`, error);
+    // Return empty array on error
   }
   
   return files;

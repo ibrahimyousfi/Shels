@@ -121,6 +121,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         session.results = { ...session.results, ...body.results };
       }
 
+      // Update config if provided (e.g., marathonTaskId)
+      if (body.config) {
+        session.config = { ...session.config, ...body.config };
+      }
+
       // Update in cache (re-save with same id)
       await saveSessionToCache(session);
       
@@ -164,6 +169,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       // Full results update (for complete replacement)
       if (body.results && Object.keys(body.results).length > 0) {
         session.results = { ...session.results, ...body.results };
+      }
+
+      // Update config if provided (e.g., marathonTaskId)
+      if (body.config) {
+        session.config = { ...session.config, ...body.config };
       }
 
       // Save updated session

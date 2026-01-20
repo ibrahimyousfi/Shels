@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+Jenkins Configuration for Shels Project
+This file contains pipeline configuration for CI/CD
+-->
+<config>
+    <project>
+        <name>Shels - Autonomous Code Testing Agent</name>
+        <description>
+            CI/CD Pipeline for Shels project
+            - Automated testing and building
+            - Deployment to Vercel
+            - Quality checks and linting
+        </description>
+    </project>
+</config>

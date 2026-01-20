@@ -1,4 +1,5 @@
 import { generateContentWithFallback } from '../utils/aiHelper';
+import { logError, logInfo } from '../utils/logger';
 
 export interface CodeFile {
   path: string;
@@ -137,7 +138,7 @@ export async function analyzeCodebase(files: CodeFile[]): Promise<CodeAnalysis> 
       }
     };
   } catch (error: any) {
-    console.error('Error analyzing codebase:', error);
+    logError('Codebase analysis failed', error, { filesCount: files.length });
     
     if (error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
       const quotaError = {

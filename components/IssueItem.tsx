@@ -8,6 +8,7 @@ import ReasoningChainSection from './IssueItem/ReasoningChainSection';
 import ActionButtons from './IssueItem/ActionButtons';
 import IssueHeader from './IssueItem/IssueHeader';
 import type { IssueItemProps, BusinessImpactData } from '@/lib/types';
+import { getIssueKey } from '@/lib/utils/issueUtils';
 
 export default function IssueItem({ issue, cachedData = {}, sessionId, onExplainFix, onSmartFix, onReasoningChain }: IssueItemProps) {
   const [loading, setLoading] = useState<'explain' | 'smart' | 'reasoning' | null>(null);
@@ -43,9 +44,6 @@ export default function IssueItem({ issue, cachedData = {}, sessionId, onExplain
     }
   }, [issue, cachedData]);
 
-  const getIssueKey = () => {
-    return `${issue.file}-${issue.type}-${issue.severity}-${issue.description.substring(0, 50)}`;
-  };
 
   const loadBusinessImpact = async () => {
     setLoadingImpact(true);
@@ -72,10 +70,10 @@ export default function IssueItem({ issue, cachedData = {}, sessionId, onExplain
   };
 
   const saveBusinessImpactToSession = async (impact: BusinessImpactData): Promise<void> => {
-    if (!sessionId) return;
+    if (!sessionId || !issue) return;
     
     try {
-      const issueKey = getIssueKey();
+      const issueKey = getIssueKey(issue);
       await fetch(`/api/sessions/${sessionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

@@ -901,7 +901,227 @@
         "language": "typescript"
       }
     ],
-    "issueData": {},
+    "issueData": {
+      "app/api/sessions/[id]/route.ts-security-high-Path Traversal vulnerability. The 'id' parameter f": {
+        "explainFix": {
+          "issue": {
+            "type": "security",
+            "severity": "high",
+            "file": "app/api/sessions/[id]/route.ts",
+            "line": 15,
+            "description": "Path Traversal vulnerability. The 'id' parameter from the URL is used directly in 'path.join' without validation, allowing an attacker to read or delete arbitrary JSON files on the server using '../' sequences.",
+            "suggestion": "Validate that the 'id' contains only alphanumeric characters and dashes, and ensure the resulting path stays within the 'SESSIONS_DIR' using 'path.resolve'."
+          },
+          "whyDangerous": "This security issue (high severity) needs attention.",
+          "howToFixManually": "Validate that the 'id' contains only alphanumeric characters and dashes, and ensure the resulting path stays within the 'SESSIONS_DIR' using 'path.resolve'.",
+          "impact": "This issue may affect code quality, security, or functionality.",
+          "priority": "high",
+          "estimatedTime": "Unknown",
+          "difficulty": "medium"
+        },
+        "smartFix": {
+          "success": true,
+          "fix": {
+            "issue": {
+              "type": "security",
+              "severity": "high",
+              "file": "app/api/sessions/[id]/route.ts",
+              "line": 15,
+              "description": "Path Traversal vulnerability. The 'id' parameter from the URL is used directly in 'path.join' without validation, allowing an attacker to read or delete arbitrary JSON files on the server using '../' sequences.",
+              "suggestion": "Validate that the 'id' contains only alphanumeric characters and dashes, and ensure the resulting path stays within the 'SESSIONS_DIR' using 'path.resolve'."
+            },
+            "questions": [
+              "Are session IDs always generated using the `session_{timestamp}_{random}` pattern found in the `/api/sessions` POST route?",
+              "Is there a requirement for session IDs to contain characters other than alphanumeric, underscores, or hyphens (e.g., for legacy support)?"
+            ],
+            "businessLogicConsiderations": [
+              "The application stores session data as JSON files in a dedicated local directory (`data/sessions`). Directory traversal poses a high risk as it could allow attackers to read or delete sensitive data outside this scope.",
+              "Since session IDs are internally generated, we can implement strict input validation without breaking core functionality. The observed generation logic uses `Date.now()` and a base36 random string, which fits within a simple alphanumeric regex.",
+              "Using `path.resolve` for the base directory and verifying the prefix of the resulting file path provides an essential layer of defense-in-depth against traversal attacks."
+            ],
+            "fixedCode": "import { NextRequest } from 'next/server';\nimport { promises as fs } from 'fs';\nimport path from 'path';\nimport { createApiResponse, createErrorResponse } from '@/lib/utils/apiHelper';\n\nconst SESSIONS_DIR = path.resolve(process.cwd(), 'data', 'sessions');\n\n/**\n * Validates the session ID and returns a safe absolute path.\n * Prevents Path Traversal by restricting characters and verifying directory bounds.\n */\nfunction getSafeFilePath(id: string): string | null {\n  // Strict regex validation: only allow alphanumeric, underscores, and hyphens.\n  // This explicitly prevents '..', '/', and '\\' traversal characters from being processed.\n  if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {\n    return null;\n  }\n\n  const filePath = path.join(SESSIONS_DIR, `${id}.json`);\n\n  // Defense in depth: Ensure the resolved path is still contained within SESSIONS_DIR\n  if (!filePath.startsWith(SESSIONS_DIR)) {\n    return null;\n  }\n\n  return filePath;\n}\n\n// GET: Get a specific session by ID\nexport async function GET(\n  request: NextRequest,\n  { params }: { params: Promise<{ id: string }> }\n) {\n  try {\n    const { id: sessionId } = await params;\n    const filePath = getSafeFilePath(sessionId);\n    \n    if (!filePath) {\n      return createErrorResponse('Invalid session ID format', 400);\n    }\n    \n    try {\n      const content = await fs.readFile(filePath, 'utf-8');\n      const session = JSON.parse(content);\n      return createApiResponse(true, { session });\n    } catch (error: any) {\n      if (error.code === 'ENOENT') {\n        return createErrorResponse('Session not found', 404);\n      }\n      throw error;\n    }\n  } catch (error: any) {\n    console.error('Error getting session:', error);\n    return createErrorResponse(error.message || 'Failed to get session', 500);\n  }\n}\n\n// DELETE: Delete a session by ID\nexport async function DELETE(\n  request: NextRequest,\n  { params }: { params: Promise<{ id: string }> }\n) {\n  try {\n    const { id: sessionId } = await params;\n    const filePath = getSafeFilePath(sessionId);\n\n    if (!filePath) {\n      return createErrorResponse('Invalid session ID format', 400);\n    }\n    \n    try {\n      await fs.unlink(filePath);\n      return createApiResponse(true, { message: 'Session deleted successfully' });\n    } catch (error: any) {\n      if (error.code === 'ENOENT') {\n        return createErrorResponse('Session not found', 404);\n      }\n      throw error;\n    }\n  } catch (error: any) {\n    console.error('Error deleting session:', error);\n    return createErrorResponse(error.message || 'Failed to delete session', 500);\n  }\n}\n\n// PATCH: Update session data (for issueData)\nexport async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {\n  try {\n    const { id: sessionId } = await params;\n    const filePath = getSafeFilePath(sessionId);\n\n    if (!filePath) {\n      return createErrorResponse('Invalid session ID format', 400);\n    }\n\n    const body = await request.json();\n\n    try {\n      // Read existing session\n      const content = await fs.readFile(filePath, 'utf-8');\n      const session = JSON.parse(content);\n\n      // Update session with new data\n      if (body.issueData !== undefined) {\n        if (!session.results.issueData) {\n          session.results.issueData = {};\n        }\n        session.results.issueData = { ...session.results.issueData, ...body.issueData };\n      }\n      \n      // Update timeline if provided\n      if (body.results?.timeline !== undefined) {\n        session.results.timeline = body.results.timeline;\n      }\n      \n      // Update metrics if provided\n      if (body.results?.metrics !== undefined) {\n        session.results.metrics = body.results.metrics;\n      }\n      \n      // Update businessImpactData if provided\n      if (body.businessImpactData !== undefined) {\n        if (!session.results.businessImpactData) {\n          session.results.businessImpactData = {};\n        }\n        session.results.businessImpactData = { ...session.results.businessImpactData, ...body.businessImpactData };\n      }\n      \n      // Full results update (for complete replacement)\n      if (body.results && Object.keys(body.results).length > 0) {\n        session.results = { ...session.results, ...body.results };\n      }\n\n      // Save updated session\n      await fs.writeFile(filePath, JSON.stringify(session, null, 2), 'utf-8');\n      \n      return createApiResponse(true, { session });\n    } catch (fileError: any) {\n      if (fileError.code === 'ENOENT') {\n        return createErrorResponse('Session not found', 404);\n      }\n      throw fileError;\n    }\n  } catch (error: any) {\n    console.error('Error updating session:', error);\n    return createErrorResponse(error.message || 'Failed to update session', 500);\n  }\n}",
+            "explanation": "To resolve the Path Traversal vulnerability, I implemented a strict validation helper `getSafeFilePath`. It uses a regular expression to allow only alphanumeric characters, underscores, and hyphens in the `id` parameter. This prevents malicious payloads containing `../` or absolute paths from being processed. Furthermore, I utilized `path.resolve` to define an absolute base directory and added a runtime check to ensure that any constructed file path remains within the intended `SESSIONS_DIR`. This pattern secures the GET, DELETE, and PATCH endpoints against unauthorized file system access.",
+            "confidence": "high",
+            "requiresConfirmation": false
+          }
+        },
+        "reasoningChain": {
+          "issue": {
+            "type": "security",
+            "severity": "high",
+            "file": "app/api/sessions/[id]/route.ts",
+            "line": 15,
+            "description": "Path Traversal vulnerability. The 'id' parameter from the URL is used directly in 'path.join' without validation, allowing an attacker to read or delete arbitrary JSON files on the server using '../' sequences.",
+            "suggestion": "Validate that the 'id' contains only alphanumeric characters and dashes, and ensure the resulting path stays within the 'SESSIONS_DIR' using 'path.resolve'."
+          },
+          "steps": [
+            {
+              "step": 1,
+              "thought": "Examine how the 'id' parameter is processed and used for file system operations in the provided route handlers.",
+              "analysis": "In the GET, DELETE, and PATCH handlers, the 'id' parameter is extracted from the URL and used to construct a fileName (e.g., `${sessionId}.json`). This name is then passed directly into 'path.join(SESSIONS_DIR, fileName)' to create a 'filePath'.",
+              "conclusion": "The 'id' parameter is used as a direct component of a file path without any sanitization or validation against directory traversal sequences like '../'.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "Evaluate the potential impact of an attacker providing a malicious 'id' value.",
+              "analysis": "If an attacker provides an 'id' such as '../../etc/passwd', 'path.join' will resolve this relative to 'SESSIONS_DIR'. While the code appends '.json', an attacker can target other JSON files outside the intended directory or use null bytes/suffix manipulation in some environments to bypass the extension (though less common in modern Node.js). More critically, they can navigate anywhere within the 'data' or 'app' structure where JSON files might exist.",
+              "conclusion": "This confirms a Path Traversal vulnerability (CWE-22), as the application does not restrict file access to the intended 'data/sessions' directory.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "Determine the necessary security controls to remediate the vulnerability.",
+              "analysis": "The fix requires two layers of defense: strict input validation and path canonicalization. Input validation ensures only expected characters (alphanumeric and dashes) are accepted. Path canonicalization using 'path.resolve' combined with a check to ensure the resulting path starts with the absolute path of 'SESSIONS_DIR' prevents escaping the sandbox.",
+              "conclusion": "Implementing both a regex check on the 'id' and a prefix check on the resolved path will effectively mitigate the risk.",
+              "confidence": "high"
+            }
+          ],
+          "finalDecision": "The vulnerability is confirmed. The 'id' parameter must be validated using a regular expression (e.g., /^[a-zA-Z0-9-]+$/) and the final path must be verified using 'path.resolve' to ensure it remains within 'SESSIONS_DIR'.",
+          "reasoningPath": "Identify sink → Analyze unsanitized input flow → Confirm traversal risk → Define multi-layered remediation strategy"
+        }
+      },
+      "lib/services/repoReader.ts-performance-medium-Sequential recursive API calls. 'readDirectoryRecu": {
+        "reasoningChain": {
+          "issue": {
+            "type": "performance",
+            "severity": "medium",
+            "file": "lib/services/repoReader.ts",
+            "line": 105,
+            "description": "Sequential recursive API calls. 'readDirectoryRecursive' awaits each subdirectory and file download sequentially. For large repositories, this leads to extremely long execution times and potential API timeouts.",
+            "suggestion": "Implement concurrency limits using 'Promise.all' with a semaphore or a library like 'p-limit' to fetch multiple files/directories in parallel."
+          },
+          "steps": [
+            {
+              "step": 1,
+              "thought": "Evaluate the current recursion and execution model of the 'readDirectoryRecursive' function.",
+              "analysis": "The function uses a 'for...of' loop containing an 'await' for every subdirectory ('readDirectoryRecursive') and every file download ('fetch'). In JavaScript, this pattern forces sequential execution where the next item in the loop cannot begin until the previous network request is fully completed.",
+              "conclusion": "The current architecture is strictly serial, meaning the total execution time is the sum of every individual network request latency, which is highly inefficient for large file trees.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "Assess the impact of sequential API calls on large GitHub repositories.",
+              "analysis": "GitHub API requests typically take 100ms-500ms. A repository with 100 code files and 10 directories would take at minimum 11-55 seconds just in network latency. This exceeds the default 30-second timeout of many serverless environments (like Vercel/Next.js) and triggers rate limiting faster due to the prolonged connection duration.",
+              "conclusion": "The performance issue is a critical bottleneck that will cause 'readFilesFromGitHub' to fail frequently on standard-sized production repositories.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "Identify the optimal concurrency strategy to resolve the bottleneck.",
+              "analysis": "Simply wrapping the loop in 'Promise.all' without limits could trigger 429 (Too Many Requests) from GitHub if hundreds of files are fetched simultaneously. A semaphore or concurrency-limited pool (like 'p-limit') is required to process multiple requests in parallel (e.g., 5-10 at a time) to balance speed with API stability.",
+              "conclusion": "Parallelization with a concurrency cap is the necessary fix to ensure both speed and reliability.",
+              "confidence": "high"
+            },
+            {
+              "step": 4,
+              "thought": "Propose a structural code change based on the analysis.",
+              "analysis": "Refactor the 'for' loop to map items to promises. Use 'p-limit' to wrap the fetch and recursive calls. Instead of 'files.push(...subFiles)', use 'Promise.all' to collect results from the limited execution pool.",
+              "conclusion": "Implementation should transition from 'await inside loop' to 'Promise.all(itemsArray.map(item => limit(() => process(item))))'.",
+              "confidence": "medium"
+            }
+          ],
+          "finalDecision": "Based on my analysis, this issue requires refactoring the recursive traversal logic from a serial 'await-in-loop' pattern to a parallel execution pattern using 'Promise.all' combined with a concurrency limiter to prevent API rate-limit exhaustion while significantly reducing execution time.",
+          "reasoningPath": "Identify sequential bottleneck → Calculate latency impact on timeouts → Determine need for capped concurrency → Propose 'p-limit' refactor → Final Decision"
+        },
+        "explainFix": {
+          "issue": {
+            "type": "performance",
+            "severity": "medium",
+            "file": "lib/services/repoReader.ts",
+            "line": 105,
+            "description": "Sequential recursive API calls. 'readDirectoryRecursive' awaits each subdirectory and file download sequentially. For large repositories, this leads to extremely long execution times and potential API timeouts.",
+            "suggestion": "Implement concurrency limits using 'Promise.all' with a semaphore or a library like 'p-limit' to fetch multiple files/directories in parallel."
+          },
+          "whyDangerous": "The current implementation uses a 'Stop-and-Wait' approach for every network request. In the recursive loop, `await readDirectoryRecursive` and `await fetch(item.download_url)` block the entire execution thread until the individual HTTP request completes. For a repository with 100 files and 20 directories, the code performs at least 120 sequential round-trips to GitHub's servers. If each request takes 200ms, the process takes 24 seconds minimum, excluding processing time. This leads to: 1. **Serverless/API Timeouts:** Most cloud platforms (like Vercel or AWS Lambda) have execution limits (usually 10-30s). Large repositories will consistently trigger 504 Gateway Timeouts. 2. **Poor UX:** Users are forced to wait minutes for a task that should take seconds. 3. **Resource Starvation:** The connection stays open longer than necessary, consuming memory and execution slots in the runtime environment.",
+          "howToFixManually": "1. Install a concurrency limiting library like `p-limit` (npm install p-limit) to avoid hitting GitHub's secondary rate limits or exhausting local sockets.\n2. Initialize a limit instance: `const limit = pLimit(10);` (allowing 10 concurrent requests).\n3. Refactor the `for...of` loop in `readDirectoryRecursive` to map items to an array of Promises.\n4. Use `Promise.all()` to execute these promises in parallel.\n\nExample implementation snippet:\n```typescript\nimport pLimit from 'p-limit';\nconst limit = pLimit(10);\n\nasync function readDirectoryRecursive(...) {\n  // ... fetch items ...\n  const tasks = itemsArray.map(item => limit(async () => {\n    if (item.type === 'dir') {\n      const subUrl = `.../${item.path}`;\n      return await readDirectoryRecursive(subUrl, owner, repo, item.path);\n    } else if (item.type === 'file' && isCodeFile(item.name)) {\n      const content = await fetchFileContent(item);\n      return [{ path: item.path, content, language: detect(item.name) }];\n    }\n    return [];\n  }));\n\n  const results = await Promise.all(tasks);\n  return results.flat();\n}\n```\n5. Apply the same logic to `countFilesRecursive` to speed up the initial counting phase.",
+          "impact": "Fixing this will drastically improve performance (likely 5x-10x speedup for most repositories). There are no breaking changes to the function signatures. The main side effects are: 1. **Memory Usage:** Spawning many promises simultaneously increases transient memory consumption. 2. **API Rate Limits:** You will consume your GitHub API quota much faster; however, for the Contents API, this is usually acceptable as long as you use a personal access token.",
+          "priority": "medium",
+          "estimatedTime": "30 minutes",
+          "difficulty": "medium"
+        }
+      },
+      "app/api/sessions/route.ts-quality-low-Inefficient session cleanup. The code reads and pa": {
+        "explainFix": {
+          "issue": {
+            "type": "quality",
+            "severity": "low",
+            "file": "app/api/sessions/route.ts",
+            "line": 95,
+            "description": "Inefficient session cleanup. The code reads and parses every single session file to find timestamps for cleanup. This O(n) operation runs on every POST request and will become slow as the number of sessions grows.",
+            "suggestion": "Store session metadata in a single index file or database to avoid reading and parsing all files just for a cleanup check."
+          },
+          "whyDangerous": "While categorized as a 'quality' issue, this pattern creates a significant performance-based Denial of Service (DoS) risk. As the session count grows, the server spends increasing amounts of CPU and I/O time performing redundant work: reading every file from disk and parsing JSON content just to extract a single timestamp. On every POST request, this blocks the event loop and saturates Disk I/O. In a production environment with high concurrency, this will lead to API timeouts, high latency for all users, and potential server crashes due to resource exhaustion. It is a 'Time-of-Check to Time-of-Use' inefficiency where the cost of saving one session is proportional to the total history of sessions.",
+          "howToFixManually": "There are three primary ways to fix this, ranging from quick optimizations to architectural improvements:\n\n1. **Use File Metadata (Fastest Fix):** Instead of reading and parsing file content, use `fs.stat` to get the file's modification time (`mtime`). This avoids expensive JSON parsing.\n2. **Timestamped Filenames (Best for File-based):** Save files using the format `${timestamp}_${id}.json`. This allows you to sort the list of files alphabetically using `fs.readdir` without opening a single file, reducing the operation from O(n) I/O reads to a simple O(n log n) string sort.\n3. **Database Migration:** For a professional production app, move session storage to a database (like SQLite or PostgreSQL). This allows you to run a single SQL command: `DELETE FROM sessions WHERE id NOT IN (SELECT id FROM sessions ORDER BY timestamp DESC LIMIT 50)`. \n\n**Example Implementation (Option 2):**\n```typescript\n// Change fileName to include timestamp\nconst fileName = `${Date.now()}_${session.id}.json`;\nconst files = await fs.readdir(SESSIONS_DIR);\nconst jsonFiles = files.filter(f => f.endsWith('.json')).sort(); // Lexicographical sort works because of timestamp prefix\nif (jsonFiles.length > 50) {\n  const toDelete = jsonFiles.slice(0, jsonFiles.length - 50);\n  for (const file of toDelete) {\n    await fs.unlink(path.join(SESSIONS_DIR, file));\n  }\n}\n```",
+          "impact": "Fixing this will drastically reduce the latency of the POST `/api/sessions` endpoint. If you choose the 'Timestamped Filename' approach, you will need to update the GET method to handle the new filename format. There are no breaking changes for the API consumers (frontend), as the JSON response structure remains identical. Performance will remain constant regardless of the number of historical sessions processed.",
+          "priority": "medium",
+          "estimatedTime": "45 minutes",
+          "difficulty": "medium"
+        }
+      },
+      "lib/services/repoReader.ts-security-medium-GitHub API Rate Limiting. The fetch calls to GitHu": {
+        "reasoningChain": {
+          "issue": {
+            "type": "security",
+            "severity": "medium",
+            "file": "lib/services/repoReader.ts",
+            "line": 84,
+            "description": "GitHub API Rate Limiting. The fetch calls to GitHub are unauthenticated. GitHub limits unauthenticated requests to 60 per hour per IP. Multiple users will quickly exhaust this quota, causing the app to fail.",
+            "suggestion": "Implement GitHub OAuth or use a Personal Access Token (PAT) passed via environment variables in the request headers."
+          },
+          "steps": [
+            {
+              "step": 1,
+              "thought": "I need to evaluate how the application interacts with the GitHub API and identify the current authentication state.",
+              "analysis": "Inspecting 'readDirectoryRecursive' and 'countFilesRecursive' in 'lib/services/repoReader.ts', I observe that the 'fetch' calls to 'api.github.com' are made without any Authorization headers. By default, the GitHub REST API treats these as unauthenticated requests.",
+              "conclusion": "The application is currently making unauthenticated requests, which are subject to GitHub's strict rate limit of 60 requests per hour per IP address.",
+              "confidence": "high"
+            },
+            {
+              "step": 2,
+              "thought": "I should determine the impact of the recursive directory traversal on the rate limit quota.",
+              "analysis": "The 'readDirectoryRecursive' function performs a new API call for every subdirectory encountered in a repository. For a standard project with dozens of folders, a single user could exhaust the 60-request hourly limit in one or two repository scans.",
+              "conclusion": "The recursive architecture compounds the risk; as the number of users or the depth of the repositories increases, the application will experience frequent 403 Forbidden errors.",
+              "confidence": "high"
+            },
+            {
+              "step": 3,
+              "thought": "I will examine the current error handling logic to see how the app reacts when the quota is actually hit.",
+              "analysis": "The code currently checks for 'response.status === 403' and logs a warning stating 'Rate limit may be exceeded,' returning an empty array. In 'app/api/analyze/route.ts', the error is caught and returns a 429 status code if the error message contains 'quota'.",
+              "conclusion": "While the app gracefully reports the failure, it does not prevent it. The user experience is broken because the core functionality (code analysis) becomes unavailable for an hour once the limit is reached.",
+              "confidence": "medium"
+            },
+            {
+              "step": 4,
+              "thought": "I need to identify the most effective remediation strategy to increase the rate limit.",
+              "analysis": "GitHub increases rate limits significantly for authenticated requests (up to 5,000 per hour). This can be achieved by providing a Personal Access Token (PAT) or using an OAuth App flow.",
+              "conclusion": "The most immediate fix is to implement an environment variable (e.g., GITHUB_TOKEN) and inject it into the fetch headers. For a multi-tenant production app, implementing GitHub OAuth would be the more scalable long-term solution.",
+              "confidence": "high"
+            }
+          ],
+          "finalDecision": "This is a medium-severity security and availability issue. The fix requires updating the 'fetch' utility to include an 'Authorization' header using a token from process.env.GITHUB_TOKEN to raise the rate limit from 60 to 5,000 requests per hour.",
+          "reasoningPath": "Identify unauthenticated calls → Analyze recursive overhead → Evaluate current error handling → Determine authentication requirements → Final Decision"
+        }
+      },
+      "lib/services/codeAnalyzer.ts-bug-medium-Inconsistent Issue Mapping. The 'CodeIssue' interf": {
+        "explainFix": {
+          "issue": {
+            "type": "bug",
+            "severity": "medium",
+            "file": "lib/services/codeAnalyzer.ts",
+            "line": 102,
+            "description": "Inconsistent Issue Mapping. The 'CodeIssue' interface defines 'type' as a union of 5 specific strings, but 'analyzeCodebase' relies on AI to return valid JSON. There is no runtime validation to ensure the AI actually returned one of those 5 types.",
+            "suggestion": "Implement a schema validation layer (like Zod) to validate the AI response and map unexpected types to a 'quality' default."
+          },
+          "whyDangerous": "This issue represents a 'Type Pollution' or 'Data Integrity' vulnerability at the boundary between an untrusted external source (the AI model) and the internal application logic. While TypeScript provides compile-time safety, `JSON.parse()` returns an `any` type, which bypasses these checks at runtime. \n\nIf the AI returns a type outside the expected union (e.g., 'vulnerability' instead of 'security'), any code that relies on that type—such as UI components using it as a key for icons (`Icons[issue.type]`), filtering logic, or database insertion—will likely crash or behave unpredictably. In a security context, if a 'security' issue is misclassified as an unknown type by the AI and your system fails to handle that unknown type, critical vulnerabilities might be hidden from the user or fail to trigger necessary alerts.",
+          "howToFixManually": "1. Install a schema validation library like Zod: `npm install zod`.\n2. Define a schema that matches your `CodeIssue` interface.\n3. Use the `.catch()` or a transform method to handle invalid enum values.\n\nExample Implementation:\n```typescript\nimport { z } from 'zod';\n\nconst IssueSchema = z.object({\n  type: z.enum(['bug', 'security', 'performance', 'quality', 'error_handling'])\n    .catch('quality'), // Default to 'quality' if AI returns something else\n  severity: z.enum(['high', 'medium', 'low']).catch('low'),\n  file: z.string(),\n  line: z.number().optional(),\n  description: z.string(),\n  suggestion: z.string().optional(),\n});\n\nconst AnalysisSchema = z.object({\n  issues: z.array(IssueSchema),\n  structure: z.object({\n    mainFiles: z.array(z.string()),\n    dependencies: z.array(z.string()),\n    architecture: z.string(),\n  }),\n  summary: z.string(),\n});\n\n// Inside analyzeCodebase:\nconst rawData = JSON.parse(jsonMatch[0]);\nconst validatedData = AnalysisSchema.parse(rawData);\nreturn {\n  ...validatedData,\n  totalFiles: files.length,\n  // ... rest of mapping\n};\n```",
+          "impact": "The fix will improve system resilience significantly. There are no negative performance implications as schema validation for a few dozen issues is computationally negligible. It ensures the UI remains stable and that data stored in the system strictly adheres to the defined types. No breaking changes are expected, as unexpected types are simply normalized to a valid default like 'quality'.",
+          "priority": "medium",
+          "estimatedTime": "30-45 minutes",
+          "difficulty": "easy"
+        }
+      }
+    },
     "businessImpactData": {
       "app/api/marathon/route.ts-bug-high-State persistence issue. The 'activeAgents' Map is": {
         "issueId": "app/api/marathon/route.ts-bug-high",

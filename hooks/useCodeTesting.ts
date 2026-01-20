@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { apiFetch } from '@/lib/utils/fetchHelper';
-import { saveSession } from '@/lib/services/sessionStorage';
+import { logError, logInfo } from '@/lib/utils/logger';
+import { performAnalysis } from './useAnalysis';
+import { generateTests, runTests, generateFixes } from './useTesting';
+import { startMarathonIfNeeded } from './useMarathon';
+import { saveAnalysisSession, loadMarathonTaskId } from './useSession';
+import type { SessionResults } from '@/lib/types';
 
 export function useCodeTesting() {
   const [errorCallback, setErrorCallback] = useState<((error: { message: string; type?: 'error' | 'warning' | 'info' }) => void) | null>(null);
@@ -10,7 +15,7 @@ export function useCodeTesting() {
   const [duration, setDuration] = useState<'one-time' | 'continuous'>('one-time');
   const [autoFix, setAutoFix] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<SessionResults | null>(null);
   const [progress, setProgress] = useState({ step: '', percentage: 0 });
   const [marathonTaskId, setMarathonTaskId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -31,161 +36,95 @@ export function useCodeTesting() {
       return;
     }
 
+    logInfo('Starting analysis', { repoUrl, filesCount: files.length });
     setIsAnalyzing(true);
     setResults(null);
-    setProgress({ step: 'Reading repository...', percentage: 10 });
 
     try {
-      const analyzeData = await performAnalysis();
-      const testData = await generateTests(analyzeData);
+      const analyzeData = await performAnalysis(repoUrl, files, (step, percentage) => {
+        setProgress({ step, percentage });
+      });
+      
+      setProgress({ step: 'Generating tests...', percentage: 50 });
+      const testData = await generateTests(analyzeData, testTypes);
+      
+      setProgress({ step: 'Running tests...', percentage: 70 });
       const testResults = await runTests(testData);
-      const fixes = await generateFixes(analyzeData);
       
-      // Generate insights with better error handling
+      setProgress({ step: 'Generating fixes...', percentage: 85 });
+      const fixes = await generateFixes(analyzeData, autoFix);
+      
       setProgress({ step: 'Generating insights...', percentage: 90 });
-      
-      // Generate timeline and metrics in parallel (but don't fail if one fails)
       const [timeline, metrics] = await Promise.allSettled([
         generateRiskTimeline(analyzeData),
         generateCodeMetrics(analyzeData)
       ]);
       
-      const timelineResult = timeline.status === 'fulfilled' ? timeline.value : null;
-      const metricsResult = metrics.status === 'fulfilled' ? metrics.value : null;
+      const marathonResult = await startMarathonIfNeeded(
+        analyzeData,
+        duration,
+        repoUrl,
+        autoFix,
+        currentSessionId
+      );
       
-      const marathonTask = await startMarathonIfNeeded(analyzeData);
+      if (marathonResult) {
+        setMarathonTaskId(marathonResult.taskId);
+      }
 
-      const finalResults: any = {
+      const finalResults: SessionResults = {
         analysis: analyzeData.analysis,
         tests: testData.tests,
-        testResults,
-        fixes,
-        marathonTask,
-        timeline: timelineResult,
-        metrics: metricsResult,
-        files: analyzeData.files || [],
+        testResults: testResults || undefined,
+        fixes: fixes || [],
+        marathonTask: marathonResult?.status,
+        timeline: timeline.status === 'fulfilled' ? timeline.value : undefined,
+        metrics: metrics.status === 'fulfilled' ? metrics.value : undefined,
+        files: analyzeData.files,
         issueData: {}
       };
 
       setResults(finalResults);
 
-      // Save session automatically
-      try {
-        const sessionName = repoUrl 
-          ? `Analysis: ${repoUrl.split('/').pop() || 'Repository'}`
-          : `Analysis: ${files.length} files`;
-        
-        const savedSession = await saveSession({
-          name: sessionName,
-          repoUrl: repoUrl || undefined,
-          results: finalResults,
-          config: {
-            testTypes,
-            duration,
-            autoFix
-          }
-        });
-        
-        setCurrentSessionId(savedSession.id);
-      } catch (error) {
-        console.error('Failed to save session:', error);
-      }
+      const sessionId = await saveAnalysisSession(repoUrl, files, finalResults, {
+        testTypes,
+        duration,
+        autoFix,
+        marathonTaskId: marathonResult?.taskId
+      });
+      
+      setCurrentSessionId(sessionId);
 
       setProgress({ step: 'Complete!', percentage: 100 });
-    } catch (error: any) {
+      
+      // Wait a moment to show "Complete!" message, then reset
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setProgress({ step: '', percentage: 0 });
+      }, 1500);
+    } catch (error: unknown) {
+      logError('Analysis error', error);
+      
+      // Reset progress but keep error visible
+      setProgress({ step: 'Error occurred', percentage: 0 });
+      
       // Don't show error if it's QUOTA_EXCEEDED (already handled)
       if (error.message !== 'QUOTA_EXCEEDED') {
         handleError(error);
       }
-    } finally {
+      
+      // Keep analyzing state false but show error
       setIsAnalyzing(false);
+    } finally {
+      // Only set to false if not already set (fallback)
+      if (isAnalyzing) {
+        setTimeout(() => {
+          setIsAnalyzing(false);
+        }, 100);
+      }
     }
   };
 
-  async function performAnalysis() {
-    setProgress({ step: 'Analyzing codebase...', percentage: 30 });
-    const formData = new FormData();
-    if (repoUrl) formData.append('repoUrl', repoUrl);
-    else files.forEach(file => formData.append('files', file));
-
-    const response = await fetch('/api/analyze', { method: 'POST', body: formData });
-    const data = await response.json();
-    
-    if (!data.success) {
-      let errorObj;
-      try {
-        errorObj = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
-      } catch {
-        errorObj = { error: { code: 500, status: 'UNKNOWN' } };
-      }
-      
-      if (errorObj.error?.code === 429 || errorObj.error?.status === 'RESOURCE_EXHAUSTED') {
-        handleQuotaError();
-        throw new Error('QUOTA_EXCEEDED');
-      }
-      throw new Error(data.message || 'Analysis failed');
-    }
-    return data;
-  }
-
-  async function generateTests(analyzeData: any) {
-    setProgress({ step: 'Generating tests...', percentage: 50 });
-    const data = await apiFetch('/api/generate-tests', {
-      method: 'POST',
-      body: JSON.stringify({ repoUrl: repoUrl || null, files: analyzeData.files || [], testTypes })
-    });
-    if (!data.success) throw new Error(data.message || 'Failed to generate tests');
-    return data;
-  }
-
-  async function runTests(testData: any) {
-    setProgress({ step: 'Running tests...', percentage: 70 });
-    const allTests = [
-      ...(testData.tests?.unitTests || []),
-      ...(testData.tests?.integrationTests || []),
-      ...(testData.tests?.securityTests || []),
-      ...(testData.tests?.performanceTests || [])
-    ];
-    if (allTests.length === 0) return null;
-
-    const data = await apiFetch('/api/run-tests', {
-      method: 'POST',
-      body: JSON.stringify({ tests: allTests })
-    });
-    return data.success ? data.results : null;
-  }
-
-  async function generateFixes(analyzeData: any) {
-    setProgress({ step: 'Generating fixes...', percentage: 85 });
-    if (!autoFix || !analyzeData.analysis?.issues || analyzeData.analysis.issues.length === 0) return null;
-
-    const filesForFix = (analyzeData.files || []).filter((file: any) => 
-      analyzeData.analysis.issues.some((issue: any) => issue.file === file.path)
-    );
-    if (filesForFix.length === 0) return null;
-
-    const data = await apiFetch('/api/fix', {
-      method: 'POST',
-      body: JSON.stringify({ files: filesForFix, issues: analyzeData.analysis.issues })
-    });
-    return data.success ? data.fixes : null;
-  }
-
-  async function startMarathonIfNeeded(analyzeData: any) {
-    if (duration !== 'continuous') return null;
-    const data = await apiFetch('/api/marathon', {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'start',
-        config: { repoUrl: repoUrl || 'uploaded', testInterval: 60, autoFix, notifyOnIssue: true }
-      })
-    });
-    if (data.success) {
-      setMarathonTaskId(data.taskId);
-      return data.status;
-    }
-    return null;
-  }
 
   function handleError(error: any) {
     let errorMessage = error.message || 'An error occurred';
@@ -206,14 +145,28 @@ export function useCodeTesting() {
       // If parsing fails, use original message
     }
     
+    // Handle specific error types
     if (errorMessage.includes('quota') || errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
       handleQuotaError();
+    } else if (errorMessage.includes('timeout')) {
+      errorCallback?.({ 
+        message: `${errorMessage}. Try analyzing a smaller repository or specific files.`, 
+        type: 'error' 
+      });
+    } else if (errorMessage.includes('rate limit') || errorMessage.includes('GitHub API')) {
+      errorCallback?.({ 
+        message: errorMessage, 
+        type: 'warning' 
+      });
     } else {
-      errorCallback?.({ message: errorMessage, type: 'error' });
+      errorCallback?.({ 
+        message: errorMessage || 'An unexpected error occurred. Please try again.', 
+        type: 'error' 
+      });
     }
   }
 
-  async function generateRiskTimeline(analyzeData: any) {
+  async function generateRiskTimeline(analyzeData: { analysis: { issues: any[] }; files: any[] }) {
     try {
       if (!analyzeData.analysis?.issues || analyzeData.analysis.issues.length === 0) {
         return null;
@@ -251,7 +204,7 @@ export function useCodeTesting() {
     }
   }
 
-  async function generateCodeMetrics(analyzeData: any) {
+  async function generateCodeMetrics(analyzeData: { files: any[]; analysis: { issues: any[] } }) {
     try {
       if (!analyzeData.files || analyzeData.files.length === 0) {
         return null;
@@ -302,7 +255,7 @@ export function useCodeTesting() {
       });
       
       if (timeline) {
-        setResults((prev: any) => ({ ...prev, timeline }));
+        setResults((prev) => prev ? { ...prev, timeline } : null);
         
         // Save to session
         if (currentSessionId) {
@@ -315,7 +268,7 @@ export function useCodeTesting() {
               })
             });
           } catch (error) {
-            console.error('Failed to save timeline to session:', error);
+            logError('Failed to save timeline to session', error);
           }
         }
         
@@ -339,7 +292,7 @@ export function useCodeTesting() {
       });
       
       if (metrics) {
-        setResults((prev: any) => ({ ...prev, metrics }));
+        setResults((prev) => prev ? { ...prev, metrics } : null);
         
         // Save to session
         if (currentSessionId) {
@@ -352,7 +305,7 @@ export function useCodeTesting() {
               })
             });
           } catch (error) {
-            console.error('Failed to save metrics to session:', error);
+            logError('Failed to save metrics to session', error);
           }
         }
         
@@ -363,13 +316,19 @@ export function useCodeTesting() {
     }
   };
 
-  const loadSession = (session: any) => {
+  const loadSession = async (session: { results: SessionResults; id: string; repoUrl?: string; config: any; name: string }) => {
     setResults(session.results);
     setCurrentSessionId(session.id);
     setRepoUrl(session.repoUrl || '');
     setTestTypes(session.config.testTypes || ['unit', 'integration', 'security']);
     setDuration(session.config.duration || 'one-time');
     setAutoFix(session.config.autoFix ?? true);
+    
+    const marathonTaskId = await loadMarathonTaskId(session.id);
+    if (marathonTaskId) {
+      setMarathonTaskId(marathonTaskId);
+    }
+    
     errorCallback?.({ message: `Session "${session.name}" loaded successfully`, type: 'info' });
   };
 

@@ -176,13 +176,19 @@ export class MarathonAgent {
   }
 
   private async autoFixIssues(issues: CodeIssue[]): Promise<void> {
-    // Auto-fix high severity issues
-    issues.filter(i => i.severity === 'high');
+    const highSeverityIssues = issues.filter(i => i.severity === 'high');
+    if (highSeverityIssues.length === 0) return;
+    
+    // Log auto-fix attempt (implementation would call fix API)
+    // TODO: Implement actual auto-fix API call
   }
 
   private async notifyIssues(issues: CodeIssue[]): Promise<void> {
-    // Notify about high severity issues
-    issues.filter(i => i.severity === 'high');
+    const highSeverityIssues = issues.filter(i => i.severity === 'high');
+    if (highSeverityIssues.length === 0) return;
+    
+    // Log notification (implementation would send notifications)
+    // TODO: Implement actual notification system
   }
 
   private saveThoughtSignature(): void {

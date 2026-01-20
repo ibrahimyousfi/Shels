@@ -3,62 +3,9 @@
 import { useEffect } from 'react';
 import IssueItem from './IssueItem';
 import type { SessionResults, CodeIssue, IssueData, ExplainFixData, SmartFixData, ReasoningChainData } from '@/lib/types';
-
-interface IssuesListProps {
-  results: SessionResults;
-  sessionId?: string;
-  onError?: (message: string, type?: 'error' | 'warning' | 'info') => void;
-}
-
-function parseErrorMessage(message: unknown): string {
-  if (!message) return 'Unknown error occurred';
-  
-  try {
-    const errorObj = typeof message === 'string' ? JSON.parse(message) : message;
-    if (errorObj.error?.code === 429 || errorObj.error?.status === 'RESOURCE_EXHAUSTED') {
-      return 'API quota exceeded. The free tier allows 20 requests per day. Please wait or use a different API key.';
-    }
-    return errorObj.error?.message || (typeof message === 'string' ? message : JSON.stringify(message));
-  } catch {
-    const msg = typeof message === 'string' ? message : 'Unknown error occurred';
-    if (msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
-      return 'API quota exceeded. The free tier allows 20 requests per day. Please wait or use a different API key.';
-    }
-    return msg;
-  }
-}
-
-function isQuotaError(errorMsg: string): boolean {
-  return errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED');
-}
-
-async function handleApiCall(
-  endpoint: string,
-  body: any,
-  onSuccess: (data: any) => void,
-  onError?: (message: string, type?: 'error' | 'warning' | 'info') => void
-): Promise<string | null> {
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await response.json();
-    if (data.success) {
-      onSuccess(data);
-      return null;
-    } else {
-      const errorMsg = parseErrorMessage(data.message);
-      onError?.(`Request failed: ${errorMsg}`, isQuotaError(errorMsg) ? 'warning' : 'error');
-      return errorMsg;
-    }
-    } catch (error: unknown) {
-      const errorMsg = parseErrorMessage(error instanceof Error ? error.message : String(error));
-      onError?.(`Error: ${errorMsg}`, isQuotaError(errorMsg) ? 'warning' : 'error');
-      return errorMsg;
-    }
-}
+import { logError } from '@/lib/utils/logger';
+import { getIssueKey } from '@/lib/utils/issueUtils';
+import { handleApiCall } from '@/lib/utils/apiCallHelper';
 
 export default function IssuesList({ results, sessionId, onError }: IssuesListProps) {
   // Load issueData directly from results (no local state caching)
@@ -80,9 +27,6 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     return files;
   };
 
-  const getIssueKey = (issue: CodeIssue): string => {
-    return `${issue.file}-${issue.type}-${issue.severity}-${issue.description.substring(0, 50)}`;
-  };
 
   const saveIssueDataToSession = async (issueKey: string, data: Partial<IssueData>): Promise<void> => {
     if (!sessionId) return;
@@ -107,6 +51,7 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save issue data to session';
+      logError('Failed to save issue data', error, { issueKey, sessionId: sessionId || 'unknown' });
       onError?.(errorMessage, 'error');
     }
   };
@@ -123,10 +68,10 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     if (!files) return null;
 
     return new Promise(async (resolve, reject) => {
-      const errorMsg = await handleApiCall(
-        '/api/explain-fix',
-        { issues: [issue], files },
-        async (data: { explanations?: ExplainFixData[] }) => {
+      const errorMsg = await handleApiCall({
+        endpoint: '/api/explain-fix',
+        body: { issues: [issue], files },
+        onSuccess: async (data: { explanations?: ExplainFixData[] }) => {
           if (data.explanations && data.explanations.length > 0) {
             const explanation = data.explanations[0];
             await saveIssueDataToSession(issueKey, { explainFix: explanation });
@@ -135,11 +80,17 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
             reject(new Error('No explanation generated'));
           }
         },
-        (msg) => {
+        onError: (msg) => {
           onError?.(msg);
-        }
-      );
+        },
+        sessionId
+      });
       if (errorMsg) {
+        logError('ExplainFix failed', new Error(errorMsg), { 
+          issueFile: issue.file, 
+          issueLine: issue.line,
+          sessionId 
+        });
         reject(new Error(errorMsg));
       }
     });
@@ -163,22 +114,38 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
     }
 
     return new Promise(async (resolve, reject) => {
-      const errorMsg = await handleApiCall(
-        '/api/context-aware-fix',
-        {
+      const errorMsg = await handleApiCall({
+        endpoint: '/api/context-aware-fix',
+        body: {
           issue,
           fileContent,
           codebaseContext: files.map((f) => f.content).join('\n\n')
         },
-        async (data: SmartFixData) => {
-          await saveIssueDataToSession(issueKey, { smartFix: data });
-          resolve(data);
+        onSuccess: async (data: any) => {
+          // Convert API response to SmartFixData format
+          const fix = data.fix || data;
+          const smartFixData: SmartFixData = {
+            fixedCode: fix.fixedCode || '',
+            explanation: fix.explanation || '',
+            businessLogicConsiderations: Array.isArray(fix.businessLogicConsiderations) 
+              ? fix.businessLogicConsiderations.join('\n\n')
+              : fix.businessLogicConsiderations || ''
+          };
+          
+          await saveIssueDataToSession(issueKey, { smartFix: smartFixData });
+          resolve(smartFixData);
         },
-        (msg) => {
+        onError: (msg) => {
           onError?.(msg);
-        }
-      );
+        },
+        sessionId
+      });
       if (errorMsg) {
+        logError('SmartFix failed', new Error(errorMsg), { 
+          issueFile: issue.file, 
+          issueLine: issue.line,
+          sessionId 
+        });
         reject(new Error(errorMsg));
       }
     });
@@ -197,14 +164,14 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
 
     const fileContent = files.find((f: any) => f.path === issue.file)?.content || '';
     return new Promise(async (resolve, reject) => {
-      const errorMsg = await handleApiCall(
-        '/api/reasoning-chain',
-        {
+      const errorMsg = await handleApiCall({
+        endpoint: '/api/reasoning-chain',
+        body: {
           issue,
           fileContent,
           codebaseContext: files.map((f) => f.content).join('\n\n')
         },
-        async (data: { chain?: ReasoningChainData }) => {
+        onSuccess: async (data: { chain?: ReasoningChainData }) => {
           if (data.chain) {
             await saveIssueDataToSession(issueKey, { reasoningChain: data.chain });
             resolve(data.chain);
@@ -212,11 +179,17 @@ export default function IssuesList({ results, sessionId, onError }: IssuesListPr
             reject(new Error('No reasoning chain generated'));
           }
         },
-        (msg) => {
+        onError: (msg) => {
           onError?.(msg);
-        }
-      );
+        },
+        sessionId
+      });
       if (errorMsg) {
+        logError('ReasoningChain failed', new Error(errorMsg), { 
+          issueFile: issue.file, 
+          issueLine: issue.line,
+          sessionId 
+        });
         reject(new Error(errorMsg));
       }
     });

@@ -14,6 +14,7 @@ interface Session {
     testTypes: string[];
     duration: string;
     autoFix: boolean;
+    marathonTaskId?: string;
   };
 }
 

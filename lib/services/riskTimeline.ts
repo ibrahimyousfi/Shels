@@ -1,27 +1,5 @@
 import { generateContentWithFallback } from '../utils/aiHelper';
-import { CodeIssue } from './codeAnalyzer';
-
-export interface RiskItem {
-  issue: CodeIssue;
-  riskLevel: 'critical' | 'high' | 'medium' | 'low';
-  urgency: 'fix-now' | 'fix-soon' | 'can-wait' | 'nice-to-have';
-  impact: string;
-  timeline: string;
-}
-
-export interface RiskTimeline {
-  critical: RiskItem[];
-  high: RiskItem[];
-  medium: RiskItem[];
-  low: RiskItem[];
-  summary: {
-    fixNow: number;
-    fixSoon: number;
-    canWait: number;
-    niceToHave: number;
-  };
-  recommendations: string[];
-}
+import type { CodeIssue, RiskTimeline, RiskItem } from '@/lib/types';
 
 /**
  * Generate risk timeline - prioritize issues by urgency

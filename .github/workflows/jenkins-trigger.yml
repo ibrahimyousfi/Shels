@@ -1,0 +1,25 @@
+name: Trigger Jenkins Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  trigger-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins Build
+        uses: appleboy/jenkins-action@master
+        with:
+          url: "http://your-jenkins-url:8080"
+          user: "jenkins-user"
+          token: ${{ secrets.JENKINS_TOKEN }}
+          job: "Shels-CI-CD"
+          # Optional: wait for build to complete
+          wait: false

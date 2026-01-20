@@ -40,3 +40,7 @@ next-env.d.ts
 /data/sessions/*
 !data/sessions/.gitkeep
 !data/sessions/*.json
+
+# logs
+/logs
+*.log

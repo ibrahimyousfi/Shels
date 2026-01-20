@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { CodeMetricsViewProps, CodeMetrics } from '@/lib/types';
+import { buildMetricItems, extractComplexityValue } from '@/lib/utils/metricsUtils';
 
 export default function CodeMetricsView({ results, onRegenerate }: CodeMetricsViewProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -112,41 +113,8 @@ function OverallScore({ score }: { score: number }) {
 }
 
 function IndividualMetrics({ metrics }: { metrics: CodeMetrics }) {
-  // Handle both old format (simple numbers) and new format (objects)
-  const maintainabilityScore = typeof metrics.maintainability === 'number' 
-    ? metrics.maintainability 
-    : metrics.maintainability?.score || 0;
-  const testabilityScore = typeof metrics.testability === 'number'
-    ? metrics.testability
-    : metrics.testability?.score || 0;
-  const complexityValue = typeof metrics.complexity === 'number'
-    ? metrics.complexity
-    : metrics.complexity?.average || 0;
-  const complexityMax = typeof metrics.complexity === 'object' ? metrics.complexity?.max : undefined;
-  const complexityDist = typeof metrics.complexity === 'object' ? metrics.complexity?.distribution : undefined;
-
-  const metricItems = [
-    { 
-      label: 'Maintainability', 
-      value: maintainabilityScore, 
-      color: maintainabilityScore >= 70 ? 'green' : maintainabilityScore >= 50 ? 'yellow' : 'red',
-      description: 'How easy is it to maintain and modify the code?'
-    },
-    { 
-      label: 'Testability', 
-      value: testabilityScore, 
-      color: testabilityScore >= 70 ? 'green' : testabilityScore >= 50 ? 'yellow' : 'red',
-      description: 'How easy is it to test the code?'
-    },
-    { 
-      label: 'Complexity (Avg)', 
-      value: complexityValue, 
-      color: complexityValue <= 30 ? 'green' : complexityValue <= 60 ? 'yellow' : 'red',
-      description: 'Average cyclomatic complexity (lower is better)',
-      isInverted: true,
-      showExtra: complexityMax !== undefined
-    }
-  ].filter(item => item.value !== undefined);
+  const metricItems = buildMetricItems(metrics);
+  const complexity = extractComplexityValue(metrics.complexity);
 
   if (metricItems.length === 0) return null;
 
@@ -185,9 +153,9 @@ function IndividualMetrics({ metrics }: { metrics: CodeMetrics }) {
                 {item.value.toFixed(1)}{item.isInverted ? '' : '%'}
               </p>
             </div>
-            {item.isInverted && item.showExtra && complexityMax !== undefined && complexityDist && (
+            {item.isInverted && item.showExtra && complexity.max !== undefined && complexity.distribution && (
               <p className="text-xs text-gray-500 mt-1">
-                Max: {complexityMax} | Distribution: {Object.keys(complexityDist).length} levels
+                Max: {complexity.max} | Distribution: {Object.keys(complexity.distribution).length} levels
               </p>
             )}
           </div>

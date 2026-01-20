@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import type { BusinessImpactViewProps, BusinessImpactData, CodeIssue } from '@/lib/types';
+import { getIssueKey } from '@/lib/utils/issueUtils';
+import { logError } from '@/lib/utils/logger';
 
 export default function BusinessImpactView({ results, sessionId, onError }: BusinessImpactViewProps) {
   const [businessImpacts, setBusinessImpacts] = useState<Map<string, BusinessImpactData>>(new Map());
@@ -47,7 +49,7 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
               return { key: getIssueKey(issue), impact: data.impact };
             }
           } catch (error) {
-            console.error(`Failed to load business impact for ${issue.file}:`, error);
+            logError(`Failed to load business impact for ${issue.file}`, error);
           }
           return null;
         });
@@ -73,11 +75,11 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
               })
             });
           } catch (error) {
-            console.error('Failed to save business impacts to session:', error);
+            logError('Failed to save business impacts to session', error);
           }
         }
       } catch (error) {
-        console.error('Failed to load business impacts:', error);
+        logError('Failed to load business impacts', error);
       }
     }
 
@@ -85,9 +87,6 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
     setLoading(false);
   };
 
-  const getIssueKey = (issue: CodeIssue): string => {
-    return `${issue.file}-${issue.type}-${issue.severity}-${issue.description.substring(0, 50)}`;
-  };
 
   if (loading) {
     return (

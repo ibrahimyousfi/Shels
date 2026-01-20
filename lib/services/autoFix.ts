@@ -57,7 +57,7 @@ Return ONLY valid JSON:
       confidence: data.confidence || 'medium'
     };
   } catch (error) {
-    console.error('Error generating fix:', error);
+    // Error is thrown, will be caught by caller
     throw error;
   }
 }
@@ -124,7 +124,7 @@ Return ONLY valid JSON:
         });
       }
     } catch (error) {
-      console.error(`Error fixing file ${filePath}:`, error);
+      // Error is logged but doesn't stop other fixes
     }
   }
 

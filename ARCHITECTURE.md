@@ -93,7 +93,7 @@ Complete technical architecture documentation demonstrating advanced implementat
 │  │  │  └────────────────────────────────────────────────────────┘   │     │     │
 │  │  │                                                               │     │     │
 │  │  │                    Self-Correction Loop                      │     │     │
-│  │  │  ┌────────────────────────────────────────────────────────┐   │     │     │
+│  │  │  ┌─────────────────────────────────────────────────────────┐   │     │     │
 │  │  │  │ 1. Run Analysis → Get Results                           │   │     │     │
 │  │  │  │ 2. Evaluate Accuracy → Identify False Positives         │   │     │     │
 │  │  │  │ 3. Adjust Strategy → Update Prompts/Logic               │   │     │     │

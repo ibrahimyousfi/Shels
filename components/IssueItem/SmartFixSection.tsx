@@ -24,24 +24,29 @@ export default function SmartFixSection({ smartFix, isExpanded, onClose }: Smart
           </button>
         )}
       </div>
-          <div className="space-y-2 text-xs">
-        {smartFix.fixedCode && (
+      <div className="space-y-2 text-xs">
+        {smartFix.fixedCode ? (
           <div>
             <p className="text-green-200 font-semibold mb-1">Fixed Code:</p>
             <pre className="text-green-100 whitespace-pre-wrap bg-green-950/30 p-2 rounded text-xs overflow-x-auto">{smartFix.fixedCode}</pre>
           </div>
+        ) : (
+          <p className="text-yellow-400 text-xs">No fixed code available</p>
         )}
-        {smartFix.explanation && (
+        {smartFix.explanation ? (
           <div>
             <p className="text-green-200 font-semibold mb-1">Explanation:</p>
             <p className="text-green-100">{smartFix.explanation}</p>
           </div>
-        )}
-        {smartFix.businessLogicConsiderations && (
+        ) : null}
+        {smartFix.businessLogicConsiderations ? (
           <div>
             <p className="text-green-200 font-semibold mb-1">Business Logic:</p>
-            <p className="text-green-100">{smartFix.businessLogicConsiderations}</p>
+            <p className="text-green-100 whitespace-pre-wrap">{smartFix.businessLogicConsiderations}</p>
           </div>
+        ) : null}
+        {!smartFix.fixedCode && !smartFix.explanation && !smartFix.businessLogicConsiderations && (
+          <p className="text-yellow-400 text-xs">No fix data available. Please try again.</p>
         )}
       </div>
     </div>

@@ -1,0 +1,32 @@
+# Jenkins Plugins Required for Shels CI/CD
+# Install these plugins via Jenkins Plugin Manager
+
+# Core Plugins
+workflow-aggregator
+pipeline-stage-view
+build-timeout
+credentials-binding
+ssh-slaves
+
+# Git Integration
+git
+github
+github-branch-source
+
+# Node.js Support
+nodejs
+
+# Build & Deploy
+vercel-deployment-plugin
+
+# Reporting
+htmlpublisher
+warnings-ng
+
+# Notifications (Optional)
+slack
+email-ext
+
+# Utilities
+timestamper
+ansicolor

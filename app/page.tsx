@@ -8,6 +8,7 @@ import TestConfig from '@/components/TestConfig';
 import ResultsView from '@/components/ResultsView';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
+import TypingAnimation from '@/components/TypingAnimation';
 import { useCodeTesting } from '@/hooks/useCodeTesting';
 
 export default function HomePage() {
@@ -29,14 +30,6 @@ export default function HomePage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  const [typingText, setTypingText] = useState('');
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-  const typingRef = useRef<{ charIndex: number; isDeleting: boolean; timeoutId: NodeJS.Timeout | null }>({
-    charIndex: 0,
-    isDeleting: false,
-    timeoutId: null
-  });
-  
   const sentences = [
     "Meet Shels: your autonomous testing agent",
     "Automate code testing, analysis, and fixes with AI",
@@ -44,47 +37,6 @@ export default function HomePage() {
     "Catch bugs before they reach production",
     "Ship faster with confidence in your code quality"
   ];
-
-  useEffect(() => {
-    const currentSentence = sentences[currentSentenceIndex];
-    
-    const type = () => {
-      const { charIndex, isDeleting } = typingRef.current;
-      
-      if (isDeleting) {
-        setTypingText(currentSentence.substring(0, charIndex - 1));
-        typingRef.current.charIndex--;
-      } else {
-        setTypingText(currentSentence.substring(0, charIndex + 1));
-        typingRef.current.charIndex++;
-      }
-
-      if (!isDeleting && typingRef.current.charIndex === currentSentence.length) {
-        typingRef.current.timeoutId = setTimeout(() => {
-          typingRef.current.isDeleting = true;
-          type();
-        }, 2000);
-        return;
-      } else if (isDeleting && typingRef.current.charIndex === 0) {
-        typingRef.current.isDeleting = false;
-        setCurrentSentenceIndex((prev) => (prev + 1) % sentences.length);
-        return;
-      }
-
-      const speed = isDeleting ? 50 : 100;
-      typingRef.current.timeoutId = setTimeout(type, speed);
-    };
-
-    typingRef.current.charIndex = 0;
-    typingRef.current.isDeleting = false;
-    typingRef.current.timeoutId = setTimeout(type, 100);
-    
-    return () => {
-      if (typingRef.current.timeoutId) {
-        clearTimeout(typingRef.current.timeoutId);
-      }
-    };
-  }, [currentSentenceIndex]);
   const {
     repoUrl, files, testTypes, duration, autoFix, isAnalyzing, results, progress, marathonTaskId, currentSessionId,
     setRepoUrl, setFiles, handleTestTypeChange, setDuration, setAutoFix, handleStartTesting,
@@ -92,9 +44,26 @@ export default function HomePage() {
   } = useCodeTesting();
 
   useEffect(() => {
-    setErrorCallback?.((err: { message: string; type?: 'error' | 'warning' | 'info' }) => {
+    setErrorCallback?.((err: { message: string; type?: 'error' | 'warning' | 'info' } | null) => {
+      if (!err) return;
+      
+      // Log error to logger
+      if (typeof window !== 'undefined') {
+        import('@/lib/utils/logger').then(({ logError, logWarn, logInfo }) => {
+          if (err.type === 'error') {
+            logError('UI Error', new Error(err.message));
+          } else if (err.type === 'warning') {
+            logWarn('UI Warning', { message: err.message });
+          } else {
+            logInfo('UI Info', { message: err.message });
+          }
+        });
+      }
+      
       setError(err);
-      setTimeout(() => setError(null), 5000);
+      // Keep errors visible longer (15 seconds for errors, 10 for warnings, 5 for info)
+      const timeout = err.type === 'error' ? 15000 : err.type === 'warning' ? 10000 : 5000;
+      setTimeout(() => setError(null), timeout);
     });
   }, [setErrorCallback]);
 
@@ -112,7 +81,7 @@ export default function HomePage() {
     if (isAnalyzing) {
       return; // Prevent switching sessions during analysis
     }
-    loadSession(session);
+    loadSession(session).catch(console.error);
   };
 
   const handleCreateNewSession = () => {
@@ -154,10 +123,10 @@ export default function HomePage() {
               <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold ${isMobile ? 'mb-2' : 'mb-3'} text-white flex items-center gap-2 min-h-[3rem] flex-wrap`}>
                 <Image src="/icon.png" alt="Shels" width={40} height={40} className={`${isMobile ? 'w-8 h-8' : 'w-10 h-10'} flex-shrink-0`} />
                 <span className="flex-1 text-wrap break-words">
-                  {typingText}
+                  <TypingAnimation sentences={sentences} />
                   <span className="animate-pulse">|</span>
                 </span>
-              </h1>
+          </h1>
               <p className={`${isMobile ? 'text-sm' : 'text-base'} text-gray-400 ${isMobile ? 'mb-4' : 'mb-8'}`}>
                 Shels will analyze, test, and fix your code automatically. Focus on what you care about while the agent works!
               </p>
@@ -307,52 +276,61 @@ export default function HomePage() {
 
             {/* Try Examples Section */}
             {!isAnalyzing && !results && (
-              <div className={`${isMobile ? 'mb-4' : 'mb-8'}`}>
+              <div className={`${isMobile ? 'mb-4' : 'mb-8'} relative`}>
                 <div className={`flex items-center gap-2 ${isMobile ? 'mb-2' : 'mb-4'}`}>
                   <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-gray-500`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>Try Shels out</h3>
                 </div>
-                <div className={`flex ${isMobile ? 'flex-wrap gap-2' : 'gap-3'}`}>
+                <div className={`flex ${isMobile ? 'flex-wrap gap-2' : 'gap-3'} relative`}>
                   {['React App', 'Node.js API', 'TypeScript Project'].map((example) => (
                     <button
                       key={example}
-                      className={`bg-[#171717] border border-[#2f0012] hover:border-[#4a0020] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors`}
+                      disabled
+                      className={`bg-[#171717] border border-[#2f0012] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors opacity-60 cursor-not-allowed`}
                     >
                       {example}
                     </button>
                   ))}
+                  {/* Coming Soon Overlay */}
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+                    <span className={`text-white font-semibold ${isMobile ? 'text-sm' : 'text-base'}`}>Coming Soon</span>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Integrate Section */}
             {!isAnalyzing && !results && (
-              <div className={`${isMobile ? 'mb-4' : 'mb-8'}`}>
+              <div className={`${isMobile ? 'mb-4' : 'mb-8'} relative`}>
                 <div className={`flex items-center gap-2 ${isMobile ? 'mb-2' : 'mb-4'}`}>
                   <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-gray-500`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                   <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>Integrate Shels</h3>
                 </div>
-                <div className={`flex ${isMobile ? 'flex-wrap gap-2' : 'gap-3'}`}>
-                  <button className={`bg-[#171717] border border-[#2f0012] hover:border-[#4a0020] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors flex items-center gap-2`}>
+                <div className={`flex ${isMobile ? 'flex-wrap gap-2' : 'gap-3'} relative`}>
+                  <button disabled className={`bg-[#171717] border border-[#2f0012] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors flex items-center gap-2 opacity-60 cursor-not-allowed`}>
                     <svg className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     {isMobile ? 'Render' : 'Configure Render'}
                   </button>
-                  <button className={`bg-[#171717] border border-[#2f0012] hover:border-[#4a0020] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors flex items-center gap-2`}>
+                  <button disabled className={`bg-[#171717] border border-[#2f0012] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors flex items-center gap-2 opacity-60 cursor-not-allowed`}>
                     <svg className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     {isMobile ? 'CLI' : 'Download CLI'}
                   </button>
-                  <button className={`bg-[#171717] border border-[#2f0012] hover:border-[#4a0020] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors flex items-center gap-2`}>
+                  <button disabled className={`bg-[#171717] border border-[#2f0012] text-white ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} rounded-lg transition-colors flex items-center gap-2 opacity-60 cursor-not-allowed`}>
                     <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>&lt; &gt;</span>
                     {isMobile ? 'API' : 'Try API'}
                   </button>
+                  {/* Coming Soon Overlay */}
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+                    <span className={`text-white font-semibold ${isMobile ? 'text-sm' : 'text-base'}`}>Coming Soon</span>
+                  </div>
                 </div>
               </div>
             )}
