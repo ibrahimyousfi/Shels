@@ -6,6 +6,7 @@ import type { SessionResults, CodeIssue, IssueData, ExplainFixData, SmartFixData
 import { logError } from '@/lib/utils/logger';
 import { getIssueKey } from '@/lib/utils/issueUtils';
 import { handleApiCall } from '@/lib/utils/apiCallHelper';
+import type { IssuesListProps } from '@/lib/types';
 
 export default function IssuesList({ results, sessionId, onError }: IssuesListProps) {
   // Load issueData directly from results (no local state caching)

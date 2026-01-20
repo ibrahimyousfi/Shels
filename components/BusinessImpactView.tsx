@@ -230,27 +230,21 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
                 <div className="mt-3 p-3 bg-blue-900/10 border border-blue-800/20 rounded-lg">
                   <p className="text-xs text-blue-300 mb-2">{impact.explanation}</p>
                   
-                  {impact.estimatedCost && (
+                  {(impact.revenueImpact || impact.userImpact || impact.reputationImpact || impact.estimatedTime) && (
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      {impact.estimatedCost.revenue && (
-                        <span className="text-red-300">💰 {impact.estimatedCost.revenue}</span>
+                      {impact.revenueImpact && (
+                        <span className="text-red-300">💰 {impact.revenueImpact}</span>
                       )}
-                      {impact.estimatedCost.users && (
-                        <span className="text-yellow-300">👥 {impact.estimatedCost.users}</span>
+                      {impact.userImpact && (
+                        <span className="text-yellow-300">👥 {impact.userImpact}</span>
                       )}
-                      {impact.estimatedCost.time && (
-                        <span className="text-green-300">⏱️ {impact.estimatedCost.time}</span>
+                      {impact.estimatedTime && (
+                        <span className="text-green-300">⏱️ {impact.estimatedTime}</span>
                       )}
-                      {impact.estimatedCost.reputation && (
-                        <span className="text-purple-300">🏆 {impact.estimatedCost.reputation}</span>
+                      {impact.reputationImpact && (
+                        <span className="text-purple-300">🏆 {impact.reputationImpact}</span>
                       )}
                     </div>
-                  )}
-
-                  {impact.realWorldExample && (
-                    <p className="text-xs text-blue-200 mt-2 italic">
-                      📊 <strong>Example:</strong> {impact.realWorldExample}
-                    </p>
                   )}
                 </div>
               </div>
@@ -266,25 +260,25 @@ export default function BusinessImpactView({ results, sessionId, onError }: Busi
           <div>
             <p className="text-gray-400 mb-2">Revenue Impact:</p>
             <p className="text-white">
-              {impactsArray.filter(item => item.impact.estimatedCost?.revenue).length} issues affecting revenue
+              {impactsArray.filter(item => item.impact.revenueImpact).length} issues affecting revenue
             </p>
           </div>
           <div>
             <p className="text-gray-400 mb-2">User Impact:</p>
             <p className="text-white">
-              {impactsArray.filter(item => item.impact.estimatedCost?.users).length} issues affecting users
+              {impactsArray.filter(item => item.impact.userImpact).length} issues affecting users
             </p>
           </div>
           <div>
             <p className="text-gray-400 mb-2">Time Impact:</p>
             <p className="text-white">
-              {impactsArray.filter(item => item.impact.estimatedCost?.time).length} issues requiring time investment
+              {impactsArray.filter(item => item.impact.estimatedTime).length} issues requiring time investment
             </p>
           </div>
           <div>
             <p className="text-gray-400 mb-2">Reputation Impact:</p>
             <p className="text-white">
-              {impactsArray.filter(item => item.impact.estimatedCost?.reputation).length} issues affecting reputation
+              {impactsArray.filter(item => item.impact.reputationImpact).length} issues affecting reputation
             </p>
           </div>
         </div>

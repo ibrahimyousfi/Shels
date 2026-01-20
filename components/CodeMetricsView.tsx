@@ -62,12 +62,12 @@ export default function CodeMetricsView({ results, onRegenerate }: CodeMetricsVi
       <IndividualMetrics metrics={metrics} />
       
       {/* Show recommendations if available */}
-      {(metrics.testability?.recommendations && metrics.testability.recommendations.length > 0) && (
+      {(typeof metrics.testability === 'object' && metrics.testability?.recommendations && metrics.testability.recommendations.length > 0) && (
         <RecommendationsSection recommendations={metrics.testability.recommendations} />
       )}
       
       {/* Show maintainability factors if available */}
-      {(metrics.maintainability?.factors && metrics.maintainability.factors.length > 0) && (
+      {(typeof metrics.maintainability === 'object' && metrics.maintainability?.factors && metrics.maintainability.factors.length > 0) && (
         <MaintainabilityFactors factors={metrics.maintainability.factors} />
       )}
       

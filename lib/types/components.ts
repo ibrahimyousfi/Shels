@@ -1,7 +1,7 @@
 import type { CodeIssue, CodeFile } from './analysis';
-import type { IssueData, ExplainFixData, SmartFixData, ReasoningChainData } from './fixes';
+import type { ExplainFixData, SmartFixData, ReasoningChainData } from './fixes';
 import type { BusinessImpactData } from './business';
-import type { SessionResults } from './session';
+import type { SessionResults, IssueData } from './session';
 
 // ===== Component Props Types =====
 export interface IssueItemProps {

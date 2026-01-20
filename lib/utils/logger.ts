@@ -9,7 +9,7 @@ export enum LogLevel {
   DEBUG = 'DEBUG'
 }
 
-interface LogEntry {
+export interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
@@ -199,6 +199,9 @@ class Logger {
    * Save log to file (server-side only)
    */
   private async saveToFile(entry: LogEntry) {
+    // Only run on server-side
+    if (typeof window !== 'undefined') return;
+    
     try {
       const fs = await import('fs/promises');
       const path = await import('path');
@@ -214,7 +217,10 @@ class Logger {
       await fs.appendFile(logFile, logLine);
     } catch (error) {
       // Silently fail if file system operations fail
-      console.error('Failed to save log to file:', error);
+      // Only log on server-side
+      if (typeof window === 'undefined') {
+        console.error('Failed to save log to file:', error);
+      }
     }
   }
 

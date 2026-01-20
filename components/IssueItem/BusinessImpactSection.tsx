@@ -13,21 +13,16 @@ export default function BusinessImpactSection({ businessImpact }: BusinessImpact
     <div className="mt-3 p-3 bg-blue-900/20 border border-blue-800/30 rounded-lg">
       <p className="text-xs font-semibold text-blue-300 mb-1">💼 Business Impact</p>
       <p className="text-xs text-blue-200">{businessImpact.explanation}</p>
-      {businessImpact.realWorldExample && (
-        <p className="text-xs text-blue-300 mt-2 italic">
-          📊 Example: {businessImpact.realWorldExample}
-        </p>
-      )}
-      {businessImpact.estimatedCost && (
+      {(businessImpact.revenueImpact || businessImpact.userImpact || businessImpact.estimatedTime) && (
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
-          {businessImpact.estimatedCost.revenue && (
-            <span className="text-red-300">💰 {businessImpact.estimatedCost.revenue}</span>
+          {businessImpact.revenueImpact && (
+            <span className="text-red-300">💰 {businessImpact.revenueImpact}</span>
           )}
-          {businessImpact.estimatedCost.users && (
-            <span className="text-yellow-300">👥 {businessImpact.estimatedCost.users}</span>
+          {businessImpact.userImpact && (
+            <span className="text-yellow-300">👥 {businessImpact.userImpact}</span>
           )}
-          {businessImpact.estimatedCost.time && (
-            <span className="text-green-300">⏱️ {businessImpact.estimatedCost.time}</span>
+          {businessImpact.estimatedTime && (
+            <span className="text-green-300">⏱️ {businessImpact.estimatedTime}</span>
           )}
         </div>
       )}

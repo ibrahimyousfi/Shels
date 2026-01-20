@@ -109,7 +109,8 @@ export function useCodeTesting() {
       setProgress({ step: 'Error occurred', percentage: 0 });
       
       // Don't show error if it's QUOTA_EXCEEDED (already handled)
-      if (error.message !== 'QUOTA_EXCEEDED') {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage !== 'QUOTA_EXCEEDED') {
         handleError(error);
       }
       
